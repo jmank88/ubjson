@@ -1,0 +1,346 @@
+package ubjson
+
+import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
+	"testing"
+)
+
+const (
+	testdata = "testdata"
+)
+
+func testFiles(name string) (input interface{}, ubj []byte, err error) {
+	var b []byte
+	b, err = ioutil.ReadFile(filepath.Join(testdata, name+".json"))
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return
+	}
+	ubj, err = ioutil.ReadFile(filepath.Join(testdata, name+".ubj"))
+	return
+}
+
+//TODO test with each type sent through Encode(interface)
+//TODO TestEncode() - one of each type simple; TestEncode*() edge cases for each type
+//TODO then also TestComplexEncode() or whatever
+func TestEncode(t *testing.T) {
+	//couch, couchUBJ, err := testFiles("CouchDB4k")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//media, mediaUBJ, err := testFiles("MediaContent")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//twitter, twitterUBJ, err := testFiles("TwitterTimeline")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+
+	var b bytes.Buffer
+	for _, testCase := range []struct {
+		input       interface{}
+		expectUBJ   []byte
+		expectBlock string
+	}{
+		{int(255), []byte{uInt8Marker, 0xFF}, "[U][255]"},
+		{uint8(0), []byte{uInt8Marker, 0x00}, "[U][0]"},
+
+		{int(-128), []byte{int8Marker, 0x80}, "[i][-128]"},
+		{int8(127), []byte{int8Marker, 0x7F}, "[i][127]"},
+
+		{int(256), []byte{int16Marker, 0x01, 0x00}, "[I][256]"},
+		{int16(32767), []byte{int16Marker, 0x7F, 0xFF}, "[I][32767]"},
+
+		{int(32768), []byte{int32Marker, 0x00, 0x00, 0x80, 0x00}, "[l][32768]"},
+		{int32(2147483647), []byte{int32Marker, 0x7F, 0xFF, 0xFF, 0xFF}, "[l][2147483647]"},
+
+		{int(2147483648), []byte{0: int64Marker, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00},
+			"[L][2147483648]"},
+		{int64(231457428363448), []byte{0: int64Marker, 0x00, 0x00, 0xD2, 0x82, 0x61, 0xCC, 0x58, 0xB8},
+			"[L][231457428363448]"},
+
+		{float32(2147483648), []byte{float32Marker, 0x4F, 0x00, 0x00, 0x00},
+			"[d][2.1474836e+09]"},
+		{float64(3.402823e38), []byte{float64Marker, 0x47, 0xEF, 0xFF, 0xFF, 0x96, 0x6A, 0xD9, 0x24},
+			"[D][3.402823e+38]"},
+
+		{HighPrecNumber("3.402823e38"), append([]byte{highPrecNumMarker, 0x55, 0x0B}, "3.402823e38"...),
+			"[H][U][11][3.402823e38]"},
+
+		{Char('a'), []byte{charMarker, 0x61}, "[C][a]"},
+
+		{"string", append([]byte{stringMarker, 0x55, 0x06}, "string"...), "[S][U][6][string]"},
+
+		{[2]byte{0x4C, 0x7F}, []byte{arrayStartMarker, typeMarker, uInt8Marker, countMarker, uInt8Marker, 0x02, 0x4C, 0x7F},
+			"[[][$][U][#][U][2]\n\t[76]\n\t[127]\n"},
+		{[]Char{'a', 'b'}, []byte{arrayStartMarker, typeMarker, charMarker, countMarker, uInt8Marker, 0x02, 'a', 'b'},
+			"[[][$][C][#][U][2]\n\t[a]\n\t[b]\n"},
+
+		{
+			map[string]interface{}{"a": uint8(5)},
+			[]byte{objectStartMarker, countMarker, uInt8Marker, 0x01,
+				uInt8Marker, 0x01, 'a', uInt8Marker, 0x05},
+			"[{][#][U][1]\n\t[U][1][a][U][5]\n",
+		},
+		{
+			map[string]int8{"a": 5},
+			[]byte{objectStartMarker, typeMarker, int8Marker, countMarker, uInt8Marker, 0x01,
+				uInt8Marker, 0x01, 'a', 0x05},
+			"[{][$][i][#][U][1]\n\t[U][1][a][5]\n",
+		},
+
+		{
+			struct {
+				A int8 `json:"a"`
+				B int8 `json:"b"`
+			}{5, 8},
+			[]byte{objectStartMarker, countMarker, uInt8Marker, 0x02,
+				uInt8Marker, 0x01, 'a', int8Marker, 0x05,
+				uInt8Marker, 0x01, 'b', int8Marker, 0x08},
+			"[{][#][U][2]\n\t[U][1][a][i][5]\n\t[U][1][b][i][8]\n",
+		},
+
+		//TODO fix these
+		//{complexStruct, complexBinary, complexBlock},
+		//{complexMap, complexBinary, complexBlock},
+
+		//TODO fix these, different lengths
+		//{couch, couchUBJ},
+		//{media, mediaUBJ},
+		//{twitter, twitterUBJ},
+	} {
+		b.Reset()
+		err := NewEncoder(&b).Encode(testCase.input)
+		if err != nil {
+			t.Fatalf("failed to encode %#v: ", testCase.input, err)
+		}
+		if !bytes.Equal(testCase.expectUBJ, b.Bytes()) {
+			t.Errorf("(%T) %v:\n expected:\n %x\n\n  but got:\n %x\n\n",
+				testCase.input, testCase.input, testCase.expectUBJ, b.Bytes())
+		}
+
+		b.Reset()
+		if err := NewEncoder(&b).Block().Encode(testCase.input); err != nil {
+			t.Fatalf("failed to encode block %#v: ", testCase.input, err)
+		}
+		if testCase.expectBlock != b.String() {
+			t.Errorf("(%T) %v:\n expected:\n %s\n\n  but got:\n %s\n\n",
+				testCase.input, testCase.input, testCase.expectBlock, b.String())
+		}
+
+	}
+}
+
+//TODO container  array elements
+//TODo container map values
+//TODO custom Marshaler (maybe include with complex, for custom date, url, and enum formatting
+
+//TODO replace by above
+//func TestEncodeBlock(t *testing.T) {
+//	var b bytes.Buffer
+//	for _, testCase := range []struct {
+//		input  interface{}
+//		expect string
+//	}{
+//		{complexStruct, complexBlock},
+//		{complexMap, complexBlock},
+//	} {
+//		b.Reset()
+//		err := NewEncoder(&b).Block().Encode(testCase.input)
+//		if err != nil {
+//			t.Fatalf("failed to encode %%#v: ", testCase.input, err)
+//		}
+//		if testCase.expect != b.String() {
+//			t.Errorf("(%T) %v:\n expected:\n %# v\n\n  but got:\n %# v\n\n diff: %v\n\n",
+//				testCase.input, testCase.input, testCase.expect, b.String(),
+//				pretty.Diff(testCase.expect, b.String()))
+//		}
+//	}
+//}
+
+//TODO exported everything, ubjson tagged fields (or just json?)
+type complexType struct {
+	Login               string `json: "login"`
+	Id                  int    `json: "id"`
+	Avatar_url          string `json: "avatar_url"`
+	Gravatar_id         string `json: "gravatar_url"`
+	URL                 string `json: "url"`
+	Name                string `json: "name"`
+	Company             string `json: "company"`
+	Blog                string `json: "blog"`
+	Location            string `json: "location"`
+	Email               string `json: "email"`
+	Hireable            bool   `json: "hireable"`
+	Bio                 string `json: "bio"`
+	Public_repos        int    `json: "public_repos"`
+	Public_gists        int    `json: "public_gists"`
+	Followers           int    `json: "followers"`
+	Following           int    `json: "following"`
+	Html_url            string `json: "html_url"`
+	Created_at          string `json: "created_at"`
+	Type                string `json: "type"`
+	Total_private_repos int    `json: "total_private_repos"`
+	Owned_private_repos int    `json: "owned_private_repos"`
+	Private_gists       int    `json: "private_gists"`
+	Disk_usage          int    `json: "disk_usage"`
+	Collaborators       int    `json: "collaborators"`
+	Plan                Plan   `json: "plan"`
+}
+
+type Plan struct {
+	Name          string `json: "name"`
+	Space         int    `json: "space"`
+	Collaborators int    `json: "collaborators"`
+	Private_repos int    `json: "private_repos"`
+}
+
+//TODO _test package, since this is public
+var complexStruct = complexType{
+	Login:               "octocat",
+	Id:                  1,
+	Avatar_url:          "https://github.com/images/error/octocat_happy.gif",
+	Gravatar_id:         "somehexcode",
+	URL:                 "https://api.github.com/users/octocat",
+	Name:                "monalisa octocat",
+	Company:             "GitHub",
+	Blog:                "https://github.com/blog",
+	Location:            "San Francisco",
+	Email:               "octocat@github.com",
+	Hireable:            false,
+	Bio:                 "There once was...",
+	Public_repos:        2,
+	Public_gists:        1,
+	Followers:           20,
+	Following:           0,
+	Html_url:            "https://github.com/octocat",
+	Created_at:          "2008-01-14T04:33:35Z",
+	Type:                "User",
+	Total_private_repos: 100,
+	Owned_private_repos: 100,
+	Private_gists:       81,
+	Disk_usage:          10000,
+	Collaborators:       8,
+	Plan: Plan{
+		Name:          "Medium",
+		Space:         400,
+		Collaborators: 10,
+		Private_repos: 20,
+	},
+}
+
+//TODO
+var complexMap = map[string]interface{}{
+	"login":               "octocat",
+	"id":                  1,
+	"avatar_url":          "https://github.com/images/error/octocat_happy.gif",
+	"gravatar_id":         "somehexcode",
+	"url":                 "https://api.github.com/users/octocat",
+	"name":                "monalisa octocat",
+	"company":             "GitHub",
+	"blog":                "https://github.com/blog",
+	"location":            "San Francisco",
+	"email":               "octocat@github.com",
+	"hireable":            false,
+	"bio":                 "There once was...",
+	"public_repos":        2,
+	"public_gists":        1,
+	"followers":           20,
+	"following":           0,
+	"html_url":            "https://github.com/octocat",
+	"created_at":          "2008-01-14T04:33:35Z",
+	"type":                "User",
+	"total_private_repos": 100,
+	"owned_private_repos": 100,
+	"private_gists":       81,
+	"disk_usage":          10000,
+	"collaborators":       8,
+	"plan": map[string]interface{}{
+		"name":          "Medium",
+		"space":         400,
+		"collaborators": 10,
+		"private_repos": 20,
+	},
+}
+
+var complexBlock = `[{][#][U][25]
+	[U][8][location][S][U][13][San Francisco]
+	[U][5][email][S][U][18][octocat@github.com]
+	[U][4][type][S][U][4][User]
+	[U][19][total_private_repos][U][100]
+	[U][4][blog][S][U][23][https://github.com/blog]
+	[U][11][gravatar_id][S][U][11][somehexcode]
+	[U][3][url][S][U][36][https://api.github.com/users/octocat]
+	[U][7][company][S][U][6][GitHub]
+	[U][8][hireable][F]
+	[U][3][bio][S][U][17][There once was...]
+	[U][12][public_gists][U][1]
+	[U][8][html_url][S][U][26][https://github.com/octocat]
+	[U][2][id][U][1]
+	[U][9][followers][U][20]
+	[U][9][following][i][0]
+	[U][10][created_at][S][U][20][2008-01-14T04:33:35Z]
+	[U][19][owned_private_repos][U][100]
+	[U][13][collaborators][U][8]
+	[U][5][login][S][U][7][octocat]
+	[U][4][name][S][U][16][monalisa octocat]
+	[U][12][public_repos][U][2]
+	[U][13][private_gists][U][81]
+	[U][10][disk_usage][I][10000]
+	[U][4][plan][{][#][U][4]
+		[U][4][name][S][U][6][Medium]
+		[U][5][space][I][400]
+		[U][13][collaborators][U][10]
+		[U][13][private_repos][U][20]
+	
+	[U][10][avatar_url][S][U][49][https://github.com/images/error/octocat_happy.gif]
+`
+
+var complexBinary = []byte{
+	0x7B, 0x69, 0x05, 0x6C, 0x6F, 0x67, 0x69, 0x6E, 0x53, 0x69, 0x07, 0x6F, 0x63, 0x74, 0x6F, 0x63,
+	0x61, 0x74, 0x69, 0x02, 0x69, 0x64, 0x69, 0x01, 0x69, 0x0A, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72,
+	0x5F, 0x75, 0x72, 0x6C, 0x53, 0x69, 0x31, 0x68, 0x74, 0x74, 0x70, 0x73, 0x3A, 0x2F, 0x2F, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x69, 0x6D, 0x61, 0x67, 0x65, 0x73,
+	0x2F, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x2F, 0x6F, 0x63, 0x74, 0x6F, 0x63, 0x61, 0x74, 0x5F, 0x68,
+	0x61, 0x70, 0x70, 0x79, 0x2E, 0x67, 0x69, 0x66, 0x69, 0x0B, 0x67, 0x72, 0x61, 0x76, 0x61, 0x74,
+	0x61, 0x72, 0x5F, 0x69, 0x64, 0x53, 0x69, 0x0B, 0x73, 0x6F, 0x6D, 0x65, 0x68, 0x65, 0x78, 0x63,
+	0x6F, 0x64, 0x65, 0x69, 0x03, 0x75, 0x72, 0x6C, 0x53, 0x69, 0x24, 0x68, 0x74, 0x74, 0x70, 0x73,
+	0x3A, 0x2F, 0x2F, 0x61, 0x70, 0x69, 0x2E, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2E, 0x63, 0x6F,
+	0x6D, 0x2F, 0x75, 0x73, 0x65, 0x72, 0x73, 0x2F, 0x6F, 0x63, 0x74, 0x6F, 0x63, 0x61, 0x74, 0x69,
+	0x04, 0x6E, 0x61, 0x6D, 0x65, 0x53, 0x69, 0x10, 0x6D, 0x6F, 0x6E, 0x61, 0x6C, 0x69, 0x73, 0x61,
+	0x20, 0x6F, 0x63, 0x74, 0x6F, 0x63, 0x61, 0x74, 0x69, 0x07, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x6E,
+	0x79, 0x53, 0x69, 0x06, 0x47, 0x69, 0x74, 0x48, 0x75, 0x62, 0x69, 0x04, 0x62, 0x6C, 0x6F, 0x67,
+	0x53, 0x69, 0x17, 0x68, 0x74, 0x74, 0x70, 0x73, 0x3A, 0x2F, 0x2F, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x62, 0x6C, 0x6F, 0x67, 0x69, 0x08, 0x6C, 0x6F, 0x63, 0x61,
+	0x74, 0x69, 0x6F, 0x6E, 0x53, 0x69, 0x0D, 0x53, 0x61, 0x6E, 0x20, 0x46, 0x72, 0x61, 0x6E, 0x63,
+	0x69, 0x73, 0x63, 0x6F, 0x69, 0x05, 0x65, 0x6D, 0x61, 0x69, 0x6C, 0x53, 0x69, 0x12, 0x6F, 0x63,
+	0x74, 0x6F, 0x63, 0x61, 0x74, 0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2E, 0x63, 0x6F, 0x6D,
+	0x69, 0x08, 0x68, 0x69, 0x72, 0x65, 0x61, 0x62, 0x6C, 0x65, 0x46, 0x69, 0x03, 0x62, 0x69, 0x6F,
+	0x53, 0x69, 0x11, 0x54, 0x68, 0x65, 0x72, 0x65, 0x20, 0x6F, 0x6E, 0x63, 0x65, 0x20, 0x77, 0x61,
+	0x73, 0x2E, 0x2E, 0x2E, 0x69, 0x0C, 0x70, 0x75, 0x62, 0x6C, 0x69, 0x63, 0x5F, 0x72, 0x65, 0x70,
+	0x6F, 0x73, 0x69, 0x02, 0x69, 0x0C, 0x70, 0x75, 0x62, 0x6C, 0x69, 0x63, 0x5F, 0x67, 0x69, 0x73,
+	0x74, 0x73, 0x69, 0x01, 0x69, 0x09, 0x66, 0x6F, 0x6C, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x73, 0x69,
+	0x14, 0x69, 0x09, 0x66, 0x6F, 0x6C, 0x6C, 0x6F, 0x77, 0x69, 0x6E, 0x67, 0x69, 0x00, 0x69, 0x08,
+	0x68, 0x74, 0x6D, 0x6C, 0x5F, 0x75, 0x72, 0x6C, 0x53, 0x69, 0x1A, 0x68, 0x74, 0x74, 0x70, 0x73,
+	0x3A, 0x2F, 0x2F, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x6F, 0x63,
+	0x74, 0x6F, 0x63, 0x61, 0x74, 0x69, 0x0A, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5F, 0x61,
+	0x74, 0x53, 0x69, 0x14, 0x32, 0x30, 0x30, 0x38, 0x2D, 0x30, 0x31, 0x2D, 0x31, 0x34, 0x54, 0x30,
+	0x34, 0x3A, 0x33, 0x33, 0x3A, 0x33, 0x35, 0x5A, 0x69, 0x04, 0x74, 0x79, 0x70, 0x65, 0x53, 0x69,
+	0x04, 0x55, 0x73, 0x65, 0x72, 0x69, 0x13, 0x74, 0x6F, 0x74, 0x61, 0x6C, 0x5F, 0x70, 0x72, 0x69,
+	0x76, 0x61, 0x74, 0x65, 0x5F, 0x72, 0x65, 0x70, 0x6F, 0x73, 0x69, 0x64, 0x69, 0x13, 0x6F, 0x77,
+	0x6E, 0x65, 0x64, 0x5F, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x5F, 0x72, 0x65, 0x70, 0x6F,
+	0x73, 0x69, 0x64, 0x69, 0x0D, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x5F, 0x67, 0x69, 0x73,
+	0x74, 0x73, 0x69, 0x51, 0x69, 0x0A, 0x64, 0x69, 0x73, 0x6B, 0x5F, 0x75, 0x73, 0x61, 0x67, 0x65,
+	0x49, 0x27, 0x10, 0x69, 0x0D, 0x63, 0x6F, 0x6C, 0x6C, 0x61, 0x62, 0x6F, 0x72, 0x61, 0x74, 0x6F,
+	0x72, 0x73, 0x69, 0x08, 0x69, 0x04, 0x70, 0x6C, 0x61, 0x6E, 0x7B, 0x69, 0x04, 0x6E, 0x61, 0x6D,
+	0x65, 0x53, 0x69, 0x06, 0x4D, 0x65, 0x64, 0x69, 0x75, 0x6D, 0x69, 0x05, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x49, 0x01, 0x90, 0x69, 0x0D, 0x63, 0x6F, 0x6C, 0x6C, 0x61, 0x62, 0x6F, 0x72, 0x61, 0x74,
+	0x6F, 0x72, 0x73, 0x69, 0x0A, 0x69, 0x0D, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x5F, 0x72,
+	0x65, 0x70, 0x6F, 0x73, 0x69, 0x14, 0x7D, 0x7D,
+}
