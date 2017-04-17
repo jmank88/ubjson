@@ -2,8 +2,8 @@ package ubjson
 
 import (
 	"bytes"
-	"testing"
 	"fmt"
+	"testing"
 )
 
 //TODO >2X speedup on structs; do all the primitives too (EncodeInt vs Encode_int)
@@ -12,7 +12,7 @@ func BenchmarkEncoder_Encode_struct(b *testing.B) {
 	var buf []byte
 	e := NewEncoder(bytes.NewBuffer(buf))
 	b.ResetTimer()
-	for i:=0;i<b.N;i++ {
+	for i := 0; i < b.N; i++ {
 		if err := e.Encode(&bs); err != nil {
 			b.Fatal(err)
 		}
@@ -24,7 +24,7 @@ func BenchmarkEncoder_EncodeValue_struct(b *testing.B) {
 	e := NewEncoder(bytes.NewBuffer(buf))
 	v := benchValue(bs)
 	b.ResetTimer()
-	for i:=0;i<b.N;i++ {
+	for i := 0; i < b.N; i++ {
 		if err := e.EncodeValue(&v); err != nil {
 			b.Fatal(err)
 		}
@@ -43,7 +43,7 @@ func BenchmarkDecoder_Decode_struct(b *testing.B) {
 	v := benchStruct{}
 	b.ResetTimer()
 
-	for i:=0;i<b.N;i++ {
+	for i := 0; i < b.N; i++ {
 		r.Reset(bin)
 		if err := d.Decode(&v); err != nil {
 			b.Fatal(err)
@@ -64,7 +64,7 @@ func BenchmarkDecoder_DecodeValue_struct(b *testing.B) {
 	v = benchValue{}
 	b.ResetTimer()
 
-	for i:=0;i<b.N;i++ {
+	for i := 0; i < b.N; i++ {
 		r.Reset(bin)
 		if err := d.DecodeValue(&v); err != nil {
 			b.Fatal(err)
@@ -73,27 +73,27 @@ func BenchmarkDecoder_DecodeValue_struct(b *testing.B) {
 }
 
 var bs = benchStruct{
-	UInt8: 100,
-	Int8: -42,
-	Int16: 500,
-	Int32: -1000,
-	Int64: 100000,
+	UInt8:  100,
+	Int8:   -42,
+	Int16:  500,
+	Int32:  -1000,
+	Int64:  100000,
 	String: "test",
-	Bytes: []byte("test"),
+	Bytes:  []byte("test"),
 }
 
 type benchStruct struct {
-	UInt8 uint8
-	Int8 int8
-	Int16 int16
-	Int32 int32
-	Int64 int64
-	Float32 float32
-	Float64 float64
-	Char Char
+	UInt8    uint8
+	Int8     int8
+	Int16    int16
+	Int32    int32
+	Int64    int64
+	Float32  float32
+	Float64  float64
+	Char     Char
 	HighPrec HighPrecNumber
-	String string
-	Bytes []byte
+	String   string
+	Bytes    []byte
 }
 
 type benchValue benchStruct
