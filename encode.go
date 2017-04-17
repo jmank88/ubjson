@@ -153,6 +153,14 @@ func (e *Encoder) EncodeString(v string) error {
 	})
 }
 
+func (e *Encoder) EncodeArray(fn func(*Encoder) error) error {
+	return e.encode(ArrayStartMarker, fn)
+}
+
+func (e *Encoder) EncodeObject(fn func(*Encoder) error) error {
+	return e.encode(ObjectStartMarker, fn)
+}
+
 // The elementMarkerFor function returns a Marker for *strict* types which may be
 // optimized away when used as container elements, otherwise it returns 0.
 func elementMarkerFor(t reflect.Type) Marker {

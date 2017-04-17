@@ -266,6 +266,16 @@ func (d *Decoder) decodeInterface() (interface{}, error) {
 	}
 }
 
+func (d *Decoder) DecodeObject(fn func(*ObjectDecoder) error) error {
+	return d.decodeValue(ObjectStartMarker, func(d *Decoder) error {
+		o, err := d.Object()
+		if err != nil {
+			return err
+		}
+		return fn(o)
+	})
+}
+
 // The Object method begins decoding an object, and returns a specialized decoder
 // for object entries.
 func (d *Decoder) Object() (*ObjectDecoder, error) {
@@ -279,6 +289,16 @@ func (d *Decoder) Object() (*ObjectDecoder, error) {
 	o.Decoder.readValType = o.readValType
 
 	return o, nil
+}
+
+func (d *Decoder) DecodeArray(fn func(*ArrayDecoder) error) error {
+	return d.decodeValue(ArrayStartMarker, func(d *Decoder) error {
+		a, err := d.Array()
+		if err != nil {
+			return err
+		}
+		return fn(a)
+	})
 }
 
 // The Array method begins decoding an array, and returns a specialized decoder
