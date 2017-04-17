@@ -2,8 +2,9 @@
 // http://ubjson.org/
 //
 // Most types can be automatically encoded through reflection with the Marshal
-// function and Encode method. Custom encodings can be defined by implementing
-// the Value interface.
+// and Unmarshal functions. Encoders and Decoders additionally provide type
+// specific methods. Custom encodings can be defined by implementing the Value
+// interface.
 package ubjson
 
 import "bytes"
