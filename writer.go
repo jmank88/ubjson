@@ -110,7 +110,6 @@ func (w *blockWriter) writeFloat64(v float64) error {
 	return w.writeBlocked(strconv.FormatFloat(float64(v), 'g', -1, 32))
 }
 
-// The writeChar method writes a UBJSON Char, which must be <=127.
 func (w *blockWriter) writeChar(v byte) error {
 	if v > 127 {
 		return fmt.Errorf("illegal char value (%d): cannot exceed 127", v)

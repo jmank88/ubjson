@@ -196,7 +196,7 @@ func elementMarkerFor(t reflect.Type) Marker {
 	return 0
 }
 
-// An ArrayEncoder supplements an Encoder with an End() methods, and performs
+// An ArrayEncoder supplements an Encoder with an End() method, and performs
 // validation and optimization of array elements. Callers must finish with a
 // call to End().
 type ArrayEncoder struct {

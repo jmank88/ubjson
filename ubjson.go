@@ -1,3 +1,5 @@
+// The ubjson package implements encoding and decoding of UBJSON.
+// http://ubjson.org/
 package ubjson
 
 import "bytes"
@@ -45,10 +47,9 @@ func UnmarshalBlock(block []byte, v interface{}) error {
 	return NewBlockDecoder(bytes.NewReader(block)).Decode(v)
 }
 
-// A Char is a byte which implements value to use 'C' instead of 'U'.
-// Must be <127.
+// A Char is a byte which is encoded as 'C' instead of 'U'. Must be <=127.
 type Char byte
 
 // A HighPrecNumber is a decimal string of arbitrary precision, which is encoded
-// with 'H'
+// with 'H' instead of 'S'.
 type HighPrecNumber string
