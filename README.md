@@ -2,9 +2,3 @@
 [Universal Binary JSON](http://ubjson.org/) library for Go.
 
 See the [GoDoc](https://godoc.org/github.com/jmank88/ubjson).
-
-###### TODO
-- Tag support: consider json, unless compelling reason for new ubjson
-- Cache struct reflection on first run: fieldnames/tags/count
-- Should DecodeInt return int64 for machines where int is < 64bits
-- Should Object{Encoder|Decoder} catch duplicate keys?
