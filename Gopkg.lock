@@ -1,0 +1,7 @@
+memo = "a0780640bf8b691034da0cc6a16f746c26f69af7d6cf2fe9d1cb50239d1f071a"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
