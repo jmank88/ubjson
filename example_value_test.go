@@ -64,7 +64,7 @@ func (c *CustomValue) UnmarshalUBJSON(d *ubjson.Decoder) error {
 	return o.End()
 }
 
-func Example_CustomValue() {
+func Example_customValue() {
 	v := &CustomValue{Field1: "test", FieldA: 42}
 	if b, err := ubjson.MarshalBlock(v); err != nil {
 		fmt.Println("error: " + err.Error())

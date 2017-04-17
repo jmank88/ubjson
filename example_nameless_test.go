@@ -47,7 +47,7 @@ func (n *Nameless) UnmarshalUBJSON(d *ubjson.Decoder) error {
 	return a.End()
 }
 
-func Example_ExampleStructAsArray() {
+func Example_structAsArray() {
 	if b, err := ubjson.MarshalBlock(&Nameless{Field1: "test", FieldA: 42}); err != nil {
 		fmt.Println("error: " + err.Error())
 	} else {

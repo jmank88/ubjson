@@ -1,10 +1,14 @@
 // The ubjson package implements encoding and decoding of UBJSON.
 // http://ubjson.org/
+//
+// Most types can be automatically encoded through reflection with the Marshal
+// function and Encode method. Custom encodings can be defined by implementing
+// the Value interface.
 package ubjson
 
 import "bytes"
 
-// Types which implement Value perform their own data marshaling and unmarshaling.
+// The Value interface defines a custom encoding.
 type Value interface {
 	// The type marker for this kind of value. Must always return the same value.
 	UBJSONType() Marker

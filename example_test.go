@@ -17,7 +17,7 @@ func ExampleMarshalBlock() {
 	// [U][8]
 }
 
-func ExampleMarshalBlock_Ints() {
+func ExampleMarshalBlock_ints() {
 	if b, err := ubjson.MarshalBlock(8); err != nil {
 		fmt.Println("error: " + err.Error())
 	} else {
@@ -40,44 +40,7 @@ func ExampleMarshalBlock_Ints() {
 	// [I][256]
 }
 
-func ExampleMarshalBlock_Char() {
-	if b, err := ubjson.MarshalBlock(byte('c')); err != nil {
-		fmt.Println("error: " + err.Error())
-	} else {
-		fmt.Println(string(b))
-	}
-	if b, err := ubjson.MarshalBlock(ubjson.Char('c')); err != nil {
-		fmt.Println("error: " + err.Error())
-	} else {
-		fmt.Println(string(b))
-	}
-
-	// Output:
-	// [U][99]
-	// [C][c]
-}
-
-func ExampleMarshalBlock_HighPrecNumber() {
-	number := "1234567890.657483921"
-	if b, err := ubjson.MarshalBlock(number); err != nil {
-		fmt.Println("error: " + err.Error())
-	} else {
-		fmt.Println(string(b))
-	}
-
-	hNumber := ubjson.HighPrecNumber("1234567890.657483921")
-	if b, err := ubjson.MarshalBlock(hNumber); err != nil {
-		fmt.Println("error: " + err.Error())
-	} else {
-		fmt.Println(string(b))
-	}
-
-	// Output:
-	// [S][U][20][1234567890.657483921]
-	// [H][U][20][1234567890.657483921]
-}
-
-func ExampleMarshalBlock_Array() {
+func ExampleMarshalBlock_array() {
 	if b, err := ubjson.MarshalBlock([]byte("testbytes")); err != nil {
 		fmt.Println("error: " + err.Error())
 	} else {
@@ -97,7 +60,7 @@ func ExampleMarshalBlock_Array() {
 	//	[115]
 }
 
-func ExampleMarshalBlock_Object() {
+func ExampleMarshalBlock_object() {
 	type object struct {
 		Str   string
 		Int   int64
@@ -120,4 +83,43 @@ func ExampleMarshalBlock_Object() {
 	//		[115]
 	//		[116]
 	// [}]
+}
+
+func ExampleChar() {
+	// Single `byte`s (and `uint8`s) normally use the UInt8 marker.
+	if b, err := ubjson.MarshalBlock(byte('a')); err != nil {
+		fmt.Println("error: " + err.Error())
+	} else {
+		fmt.Println(string(b))
+	}
+	// The `Char` type uses the Char marker instead.
+	if b, err := ubjson.MarshalBlock(ubjson.Char('a')); err != nil {
+		fmt.Println("error: " + err.Error())
+	} else {
+		fmt.Println(string(b))
+	}
+
+	// Output:
+	// [U][97]
+	// [C][a]
+}
+
+func ExampleHighPrecNumber() {
+	number := "1234567890.657483921"
+	if b, err := ubjson.MarshalBlock(number); err != nil {
+		fmt.Println("error: " + err.Error())
+	} else {
+		fmt.Println(string(b))
+	}
+
+	hNumber := ubjson.HighPrecNumber("1234567890.657483921")
+	if b, err := ubjson.MarshalBlock(hNumber); err != nil {
+		fmt.Println("error: " + err.Error())
+	} else {
+		fmt.Println(string(b))
+	}
+
+	// Output:
+	// [S][U][20][1234567890.657483921]
+	// [H][U][20][1234567890.657483921]
 }

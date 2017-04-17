@@ -55,7 +55,7 @@ func (iv *Int8Vec3) UnmarshalUBJSON(d *ubjson.Decoder) error {
 	return a.End()
 }
 
-func Example_Pair() {
+func Example_pair() {
 	iv := &Int8Vec3{a: 100, b: 42, c: -55}
 	if b, err := ubjson.MarshalBlock(iv); err != nil {
 		fmt.Println("error: " + err.Error())
