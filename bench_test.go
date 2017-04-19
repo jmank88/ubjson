@@ -6,7 +6,268 @@ import (
 	"testing"
 )
 
-//TODO >2X speedup on structs; do all the primitives too (EncodeInt vs Encode_int)
+func BenchmarkEncoder_EncodeInt(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeInt(int(1000)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+func BenchmarkEncoder_Encode_int(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(int(1000)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeUInt8(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeUInt8(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_uint8(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(uint8(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeInt8(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeInt8(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_int8(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(int8(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeInt16(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeInt16(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_int16(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(int16(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeInt32(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeInt32(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_int32(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(int32(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeInt64(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeInt64(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_int64(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(int64(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeFloat32(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeFloat32(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_float32(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(float32(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeFloat64(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeFloat64(42); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_float64(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(float64(42)); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeChar(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeChar('a'); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_char(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(Char('a')); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeHighPrecNum(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeHighPrecNum("12345.6789"); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_highPrecNum(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(HighPrecNumber("12345.6789")); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeString(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeString("test"); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_string(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode("test"); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_EncodeBool(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.EncodeBool(true); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEncoder_Encode_bool(b *testing.B) {
+	var buf []byte
+	e := NewEncoder(bytes.NewBuffer(buf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.Encode(true); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
 
 func BenchmarkEncoder_Encode_struct(b *testing.B) {
 	var buf []byte
