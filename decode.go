@@ -346,9 +346,8 @@ func (o *ObjectDecoder) readValType() (Marker, error) {
 	}
 	if o.ValType == 0 {
 		return o.readMarker()
-	} else {
-		return o.ValType, nil
 	}
+	return o.ValType, nil
 }
 
 // DecodeKey reads an object key.
@@ -424,9 +423,8 @@ func (a *ArrayDecoder) readElemType() (Marker, error) {
 	}
 	if a.ElemType == 0 {
 		return a.readMarker()
-	} else {
-		return a.ElemType, nil
 	}
+	return a.ElemType, nil
 }
 
 // NextElem returns true when there is another element to decode, or false if
