@@ -1,4 +1,4 @@
-// The ubjson package implements encoding and decoding of UBJSON (spec 12).
+// Package ubjson implements encoding and decoding of UBJSON (spec 12).
 // http://ubjson.org/
 //
 // Most types can be automatically encoded through reflection with the Marshal
