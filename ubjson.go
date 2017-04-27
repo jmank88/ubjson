@@ -19,7 +19,7 @@ type Value interface {
 	UnmarshalUBJSON(*Decoder) error
 }
 
-// The Marshal function marshals v. Types implementing Value will be encoded
+// Marshal encodes a value into UBJSON. Types implementing Value will be encoded
 // with their UBJSONType and MarshalUBJSON methods.
 func Marshal(v interface{}) ([]byte, error) {
 	var b bytes.Buffer
@@ -29,8 +29,8 @@ func Marshal(v interface{}) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// The MarshalBlock function is like Marshal but produces human-readable
-// block-notation, rather than binary.
+// MarshalBlock encodes a value into UBJSON block-notation. Types implementing
+// Value will be encoded with their UBJSONType and MarshalUBJSON methods.
 func MarshalBlock(v interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	if err := NewBlockEncoder(&b).Encode(v); err != nil {
@@ -39,15 +39,14 @@ func MarshalBlock(v interface{}) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// The Unmarshal function unmarshals universal binary json into v.
-// Types implementing Value will be decoded via their UBJSONType and
-// UnmarshalUBJSON methods.
+// Unmarshal decodes a value from UBJSON. Types implementing Value will be
+// decoded via their UBJSONType and UnmarshalUBJSON methods.
 func Unmarshal(binary []byte, v interface{}) error {
 	return NewDecoder(bytes.NewReader(binary)).Decode(v)
 }
 
-// The UnmarshalBlock function is like Unmarshal but parses human-readable
-// block-notation, rather than binary.
+// UnmarshalBlock decodes a value from UBJSON block-notation. Types implementing
+// Value will be encoded with their UBJSONType and MarshalUBJSON methods.
 func UnmarshalBlock(block []byte, v interface{}) error {
 	return NewBlockDecoder(bytes.NewReader(block)).Decode(v)
 }
