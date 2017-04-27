@@ -472,7 +472,7 @@ func (e *Encoder) Encode(v interface{}) error {
 		return e.Encode(value.Elem().Interface())
 	}
 
-	return fmt.Errorf("unable to encode value: %V", v)
+	return fmt.Errorf("unable to encode value: %v", v)
 }
 
 func encodeArray(arrayValue reflect.Value) func(*Encoder) error {
