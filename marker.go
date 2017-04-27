@@ -9,6 +9,7 @@ func (m Marker) String() string {
 
 const (
 	// Value Type Markers
+
 	NullMarker Marker = 'Z'
 
 	NoOpMarker Marker = 'N'
@@ -34,12 +35,14 @@ const (
 
 const (
 	// Container Types Markers
+
 	ArrayStartMarker  Marker = '['
 	ObjectStartMarker Marker = '{'
 )
 
 const (
 	// Container Meta-Markers
+
 	arrayEndMarker  Marker = ']'
 	objectEndMarker Marker = '}'
 	countMarker     Marker = '#'

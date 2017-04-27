@@ -215,23 +215,48 @@ type ArrayEncoder struct {
 	count    int
 }
 
-// End completes array encoding.
-func (e *ArrayEncoder) End() error {
-	e.decIndent()
-
-	if e.len < 0 {
-		if err := e.writeNewLine(); err != nil {
-			return err
+func (a *ArrayEncoder) writeElemType(m Marker) error {
+	if a.len >= 0 {
+		a.count++
+		if a.count > a.len {
+			return errTooMany(a.len)
 		}
-
-		if err := e.writeMarker(arrayEndMarker); err != nil {
-			return err
-		}
-	} else if e.len != e.count {
-		return fmt.Errorf("unable to end array of length %d after %d elements", e.len, e.count)
 	}
 
-	return e.Flush()
+	if err := a.writeNewLine(); err != nil {
+		return err
+	}
+
+	if a.elemType == 0 {
+		if err := a.writeMarker(m); err != nil {
+			return err
+		}
+	} else {
+		if a.elemType != m {
+			return errWrongTypeWrite(a.elemType, m)
+		}
+		// Omit type marker.
+	}
+	return nil
+}
+
+// End completes array encoding.
+func (a *ArrayEncoder) End() error {
+	a.decIndent()
+
+	if a.len < 0 {
+		if err := a.writeNewLine(); err != nil {
+			return err
+		}
+
+		if err := a.writeMarker(arrayEndMarker); err != nil {
+			return err
+		}
+	} else if a.len != a.count {
+		return fmt.Errorf("unable to end array of length %d after %d elements", a.len, a.count)
+	}
+
+	return a.Flush()
 }
 
 // An ObjectEncoder supplements an Encoder with EncodeKey() and End() methods,
@@ -383,31 +408,6 @@ func (e *Encoder) writeContainer(elemType Marker, len int) error {
 		if err := writeInt(e, len); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (a *ArrayEncoder) writeElemType(m Marker) error {
-	if a.len >= 0 {
-		a.count++
-		if a.count > a.len {
-			return errTooMany(a.len)
-		}
-	}
-
-	if err := a.writeNewLine(); err != nil {
-		return err
-	}
-
-	if a.elemType == 0 {
-		if err := a.writeMarker(m); err != nil {
-			return err
-		}
-	} else {
-		if a.elemType != m {
-			return errWrongTypeWrite(a.elemType, m)
-		}
-		// Omit type marker.
 	}
 	return nil
 }
