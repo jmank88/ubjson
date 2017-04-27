@@ -37,13 +37,13 @@ func (d *Decoder) DecodeValue(v Value) error {
 }
 
 // decodeValue asserts a value's type marker, then decodes the data.
-func (d *Decoder) decodeValue(m Marker, data func(*Decoder) error) error {
+func (d *Decoder) decodeValue(m Marker, decodeData func(*Decoder) error) error {
 	if r, err := d.readValType(); err != nil {
 		return errors.Wrapf(err, "failed trying to read type '%s'", m)
 	} else if r != m {
 		return errWrongTypeRead(m, r)
 	}
-	return data(d)
+	return decodeData(d)
 }
 
 // assertType reads the next marker and returns an error if it is not m.
@@ -266,14 +266,14 @@ func (d *Decoder) decodeInterface() (interface{}, error) {
 	}
 }
 
-// DecodeObject decodes an object container using dataFn.
-func (d *Decoder) DecodeObject(dataFn func(*ObjectDecoder) error) error {
+// DecodeObject decodes an object container.
+func (d *Decoder) DecodeObject(decodeData func(*ObjectDecoder) error) error {
 	return d.decodeValue(ObjectStartMarker, func(d *Decoder) error {
 		o, err := d.Object()
 		if err != nil {
 			return err
 		}
-		return dataFn(o)
+		return decodeData(o)
 	})
 }
 
@@ -292,14 +292,14 @@ func (d *Decoder) Object() (*ObjectDecoder, error) {
 	return o, nil
 }
 
-// DecodeArray decodes an array container using dataFn.
-func (d *Decoder) DecodeArray(dataFn func(*ArrayDecoder) error) error {
+// DecodeArray decodes an array container.
+func (d *Decoder) DecodeArray(decodeData func(*ArrayDecoder) error) error {
 	return d.decodeValue(ArrayStartMarker, func(d *Decoder) error {
 		a, err := d.Array()
 		if err != nil {
 			return err
 		}
-		return dataFn(a)
+		return decodeData(a)
 	})
 }
 

@@ -16,31 +16,31 @@ type Encoder struct {
 	writeValType func(Marker) error
 }
 
-// The NewEncoder functions returns a new Encoder.
+// NewEncoder returns a new Encoder.
 func NewEncoder(w io.Writer) *Encoder {
 	e := &Encoder{writer: newBinaryWriter(w)}
 	e.writeValType = e.writeMarker
 	return e
 }
 
-// The NewEncoder functions returns a new block-notation Encoder.
+// NewBlockEncoder returns a new block-notation Encoder.
 func NewBlockEncoder(w io.Writer) *Encoder {
 	e := &Encoder{writer: newBlockWriter(w)}
 	e.writeValType = e.writeMarker
 	return e
 }
 
-// The EncodeNull method encodes the null valType.
+// EncodeNull encodes the null valType.
 func (e *Encoder) EncodeNull() error {
 	return e.encode(NullMarker, func(*Encoder) error { return nil })
 }
 
-// The EncodeNoOp method encodes the NoOp valType.
+// EncodeNoOp encodes the NoOp valType.
 func (e *Encoder) EncodeNoOp() error {
 	return e.encode(NoOpMarker, func(*Encoder) error { return nil })
 }
 
-// The EncodeBool method encodes the true or false Marker.
+// EncodeBool encodes the true (T) or false (F) Marker.
 func (e *Encoder) EncodeBool(v bool) error {
 	m := FalseMarker
 	if v {
@@ -49,59 +49,58 @@ func (e *Encoder) EncodeBool(v bool) error {
 	return e.encode(m, func(*Encoder) error { return nil })
 }
 
-// The EncodeValue method encodes the Value v, using UBJSONType and
-// UnmarshalUBJSON methods.
+// EncodeValue encodes the Value v, using UBJSONType and UnmarshalUBJSON.
 func (e *Encoder) EncodeValue(v Value) error {
 	return e.encode(v.UBJSONType(), v.MarshalUBJSON)
 }
 
-// The EncodeUInt8 method encodes the uint8 v.
+// EncodeUInt8 encodes a uint8 as a (U).
 func (e *Encoder) EncodeUInt8(v uint8) error {
 	return e.encode(UInt8Marker, func(*Encoder) error {
 		return e.writeUInt8(v)
 	})
 }
 
-func (e *Encoder) encode(m Marker, fn func(*Encoder) error) error {
+func (e *Encoder) encode(m Marker, encodeData func(*Encoder) error) error {
 	// Normally actually writes, but omitted for strongly typed containers.
 	if err := e.writeValType(m); err != nil {
 		return err
 	}
-	if err := fn(e); err != nil {
+	if err := encodeData(e); err != nil {
 		return err
 	}
 	return e.Flush()
 }
 
-// The EncodeInt8 method encodes the int8 v.
+// EncodeInt8 encodes an int8 as an 'i'.
 func (e *Encoder) EncodeInt8(v int8) error {
 	return e.encode(Int8Marker, func(*Encoder) error {
 		return e.writeInt8(v)
 	})
 }
 
-// The EncodeInt16 method encodes the int16 v.
+// EncodeInt16 encodes an int16 as an 'I'.
 func (e *Encoder) EncodeInt16(v int16) error {
 	return e.encode(Int16Marker, func(*Encoder) error {
 		return e.writeInt16(v)
 	})
 }
 
-// The EncodeInt32 method encodes the int32 v.
+// EncodeInt32 encodes an int32 as an 'l'.
 func (e *Encoder) EncodeInt32(v int32) error {
 	return e.encode(Int32Marker, func(*Encoder) error {
 		return e.writeInt32(v)
 	})
 }
 
-// The EncodeInt64 method encodes the int64 v.
+// EncodeInt64 encodes an int64 as an 'L'.
 func (e *Encoder) EncodeInt64(v int64) error {
 	return e.encode(Int64Marker, func(*Encoder) error {
 		return e.writeInt64(v)
 	})
 }
 
-// The EncodeInt method encodes the int v in the smallest possible format.
+// EncodeInt encodes an int in the smallest possible integer format (U,i,L,l,L).
 func (e *Encoder) EncodeInt(v int) error {
 	switch smallestIntMarker(int64(v)) {
 	case UInt8Marker:
@@ -118,51 +117,53 @@ func (e *Encoder) EncodeInt(v int) error {
 	return errors.New("TODO unreachable, programmere marker error")
 }
 
-// The EncodeFloat32 method encodes the float32 v.
+// EncodeFloat32 encodes a float32 as an 'f'.
 func (e *Encoder) EncodeFloat32(v float32) error {
 	return e.encode(Float32Marker, func(*Encoder) error {
 		return e.writeFloat32(v)
 	})
 }
 
-// The EncodeFloat64 method encodes the float64 v.
+// EncodeFloat64 encodes a float64 as an 'F'.
 func (e *Encoder) EncodeFloat64(v float64) error {
 	return e.encode(Float64Marker, func(*Encoder) error {
 		return e.writeFloat64(v)
 	})
 }
 
-// The EncodeHighPrecNum method encodes the string v as a high precision number.
+// EncodeHighPrecNum encodes a string v as a high precision number 'H'.
 func (e *Encoder) EncodeHighPrecNum(v string) error {
 	return e.encode(HighPrecNumMarker, func(*Encoder) error {
 		return e.writeString(v)
 	})
 }
 
-// The EncodeChar method encodes the byte v.
+// EncodeChar encodes a byte as a 'C'.
 func (e *Encoder) EncodeChar(v byte) error {
 	return e.encode(CharMarker, func(*Encoder) error {
 		return e.writeChar(v)
 	})
 }
 
-// The EncodeString method encodes the string v.
+// EncodeString encodes a string as a 'S'.
 func (e *Encoder) EncodeString(v string) error {
 	return e.encode(StringMarker, func(*Encoder) error {
 		return e.writeString(v)
 	})
 }
 
-func (e *Encoder) EncodeArray(fn func(*Encoder) error) error {
-	return e.encode(ArrayStartMarker, fn)
+// EncodeArray encodes an array container.
+func (e *Encoder) EncodeArray(encodeData func(*Encoder) error) error {
+	return e.encode(ArrayStartMarker, encodeData)
 }
 
-func (e *Encoder) EncodeObject(fn func(*Encoder) error) error {
-	return e.encode(ObjectStartMarker, fn)
+// EncodeObject encodes an object container.
+func (e *Encoder) EncodeObject(encodeData func(*Encoder) error) error {
+	return e.encode(ObjectStartMarker, encodeData)
 }
 
-// The elementMarkerFor function returns a Marker for *strict* types which may be
-// optimized away when used as container elements, otherwise it returns 0.
+// elementMarkerFor returns a Marker for *strict* types which may be optimized
+// away when used as container elements, otherwise it returns 0.
 func elementMarkerFor(t reflect.Type) Marker {
 	if t == nil {
 		return 0
@@ -214,7 +215,7 @@ type ArrayEncoder struct {
 	count    int
 }
 
-//The End method completes array encoding.
+// End completes array encoding.
 func (e *ArrayEncoder) End() error {
 	e.decIndent()
 
@@ -272,7 +273,7 @@ func (o *ObjectEncoder) writeValType(m Marker) error {
 	return nil
 }
 
-// The EncodeKey method encodes an object key.
+// EncodeKey encodes an object key.
 func (o *ObjectEncoder) EncodeKey(key string) error {
 	o.count++
 
@@ -292,7 +293,7 @@ func (o *ObjectEncoder) EncodeKey(key string) error {
 	return o.writeString(key)
 }
 
-// The End method checks the length or writes an end maker.
+// End checks the length or writes an end maker.
 func (o *ObjectEncoder) End() error {
 	o.decIndent()
 
@@ -311,19 +312,19 @@ func (o *ObjectEncoder) End() error {
 	return o.Flush()
 }
 
-// The Object method begins encoding an object container.
+// Object begins encoding an object container.
 func (e *Encoder) Object() (*ObjectEncoder, error) {
 	return e.ObjectType(0, -1)
 }
 
-// The ObjectLen method begins encoding an object container with a specified
+// ObjectLen begins encoding an object container with a specified
 // length.
 func (e *Encoder) ObjectLen(len int) (*ObjectEncoder, error) {
 	return e.ObjectType(0, len)
 }
 
-// The ObjectType method begins encoding a strongly-typed object container with
-// a specified length.
+// ObjectType begins encoding a strongly-typed object container with a specified
+// length.
 func (e *Encoder) ObjectType(valType Marker, len int) (*ObjectEncoder, error) {
 	e.incIndent()
 
@@ -337,21 +338,19 @@ func (e *Encoder) ObjectType(valType Marker, len int) (*ObjectEncoder, error) {
 	return o, nil
 }
 
-// The Array method begins encoding an array container.
+// Array method encoding an array container.
 func (e *Encoder) Array() (*ArrayEncoder, error) {
 	return e.ArrayType(0, -1)
 }
 
-// The ArrayLen method begins encoding an array container with a specified
-// length.
+// ArrayLen begins encoding an array container with a specified length.
 func (e *Encoder) ArrayLen(len int) (*ArrayEncoder, error) {
 	return e.ArrayType(0, len)
 }
 
-// The ArrayType method begins encoding a strongly-typed array container with a
-// specified length.
-// When encoding a single byte element type, actual elements are optimized away,
-// and End() must be called immediately.
+// ArrayType begins encoding a strongly-typed array container with a specified
+// length. When encoding a single byte element type, actual elements are
+// optimized away, and End() must be called immediately.
 func (e *Encoder) ArrayType(elemType Marker, len int) (*ArrayEncoder, error) {
 	e.incIndent()
 
@@ -413,8 +412,8 @@ func (a *ArrayEncoder) writeElemType(m Marker) error {
 	return nil
 }
 
-// The Encode methods encodes v into universal binary json.
-// Types implementing Value will be encoded via their MarshalUBJSON method.
+// Encode encodes v into universal binary json. Types implementing Value will be
+// encoded via their MarshalUBJSON method.
 func (e *Encoder) Encode(v interface{}) error {
 	if v == nil {
 		return e.EncodeNull()
