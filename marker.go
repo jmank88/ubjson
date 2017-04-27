@@ -1,15 +1,14 @@
 package ubjson
 
-// A Marker is a single byte UBJSON valType byte.
+// A Marker is a single byte UBJSON marker.
 type Marker byte
 
 func (m Marker) String() string {
 	return string(m)
 }
 
+// Value Type Markers
 const (
-	// Value Type Markers
-
 	NullMarker Marker = 'Z'
 
 	NoOpMarker Marker = 'N'
@@ -33,16 +32,14 @@ const (
 	StringMarker Marker = 'S'
 )
 
+// Container Types Markers
 const (
-	// Container Types Markers
-
 	ArrayStartMarker  Marker = '['
 	ObjectStartMarker Marker = '{'
 )
 
+// Container Meta-Markers
 const (
-	// Container Meta-Markers
-
 	arrayEndMarker  Marker = ']'
 	objectEndMarker Marker = '}'
 	countMarker     Marker = '#'
