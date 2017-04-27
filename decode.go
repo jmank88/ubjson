@@ -573,19 +573,19 @@ func (d *Decoder) Decode(v interface{}) error {
 	// Containers
 	switch value.Elem().Kind() {
 	case reflect.Array:
-		return d.decodeValue(ArrayStartMarker, arrayToArray(value))
+		return d.DecodeArray(arrayToArray(value))
 	case reflect.Slice:
-		return d.decodeValue(ArrayStartMarker, arrayToSlice(value))
+		return d.DecodeArray(arrayToSlice(value))
 
 	case reflect.Map:
 		if value.Elem().Kind() != reflect.String &&
 			!value.Elem().Type().Key().ConvertibleTo(stringType) {
 			return fmt.Errorf("unable to decode map of type %s: key type must be string", value.Type())
 		}
-		return d.decodeValue(ObjectStartMarker, objectIntoMap(value))
+		return d.DecodeObject(objectIntoMap(value))
 
 	case reflect.Struct:
-		return d.decodeValue(ObjectStartMarker, objectIntoStruct(value))
+		return d.DecodeObject(objectIntoStruct(value))
 	}
 
 	return fmt.Errorf("unable to decode this type of value: %T %v", v, v)
@@ -593,12 +593,8 @@ func (d *Decoder) Decode(v interface{}) error {
 
 // arrayToArray returns a function to decode an array container into
 // arrayPtr.Elem(). Returns an error if the lengths are not equal.
-func arrayToArray(arrayPtr reflect.Value) func(*Decoder) error {
-	return func(d *Decoder) error {
-		ad, err := d.Array()
-		if err != nil {
-			return err
-		}
+func arrayToArray(arrayPtr reflect.Value) func(*ArrayDecoder) error {
+	return func(ad *ArrayDecoder) error {
 		arrayValue := arrayPtr.Elem()
 		elemType := arrayValue.Type().Elem()
 		if ad.Len > 0 {
@@ -620,12 +616,8 @@ func arrayToArray(arrayPtr reflect.Value) func(*Decoder) error {
 
 // arrayToSlice returns a function to decode an array container into
 // slicePtr.Elem().
-func arrayToSlice(slicePtr reflect.Value) func(*Decoder) error {
-	return func(d *Decoder) error {
-		ad, err := d.Array()
-		if err != nil {
-			return err
-		}
+func arrayToSlice(slicePtr reflect.Value) func(*ArrayDecoder) error {
+	return func(ad *ArrayDecoder) error {
 		sliceValue := slicePtr.Elem()
 		elemType := sliceValue.Type().Elem()
 		if ad.Len < 0 {
@@ -654,12 +646,8 @@ func arrayToSlice(slicePtr reflect.Value) func(*Decoder) error {
 
 var zeroValue = reflect.Value{}
 
-func objectIntoStruct(structPtr reflect.Value) func(*Decoder) error {
-	return func(d *Decoder) error {
-		o, err := d.Object()
-		if err != nil {
-			return err
-		}
+func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
+	return func(o *ObjectDecoder) error {
 		for o.NextEntry() {
 			k, err := o.DecodeKey()
 			if err != nil {
@@ -678,13 +666,8 @@ func objectIntoStruct(structPtr reflect.Value) func(*Decoder) error {
 	}
 }
 
-func objectIntoMap(mapPtr reflect.Value) func(*Decoder) error {
-	return func(d *Decoder) error {
-		o, err := d.Object()
-		if err != nil {
-			return err
-		}
-
+func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
+	return func(o *ObjectDecoder) error {
 		mapValue := mapPtr.Elem()
 		//TODO go1.9 - MakeMapWithSize
 		mapValue.Set(reflect.MakeMap(mapValue.Type()))
