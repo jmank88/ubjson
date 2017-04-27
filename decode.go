@@ -17,26 +17,26 @@ type Decoder struct {
 	readValType func() (Marker, error)
 }
 
-// The NewDecoder function returns a new Decoder.
+// NewDecoder returns a new Decoder.
 func NewDecoder(r io.Reader) *Decoder {
 	d := &Decoder{reader: newBinaryReader(r)}
 	d.readValType = d.readMarker
 	return d
 }
 
-// The NewDecoder function returns a new block-notation Decoder.
+// NewBlockDecoder returns a new block-notation Decoder.
 func NewBlockDecoder(r io.Reader) *Decoder {
 	d := &Decoder{reader: newBlockReader(r)}
 	d.readValType = d.readMarker
 	return d
 }
 
-// The DecodeValue method decodes the next value into v.
+// DecodeValue decodes the next value into v.
 func (d *Decoder) DecodeValue(v Value) error {
 	return d.decodeValue(v.UBJSONType(), v.UnmarshalUBJSON)
 }
 
-// The decode method asserts a value's type marker, then decodes the data.
+// decodeValue asserts a value's type marker, then decodes the data.
 func (d *Decoder) decodeValue(m Marker, data func(*Decoder) error) error {
 	if r, err := d.readValType(); err != nil {
 		return errors.Wrapf(err, "failed trying to read type '%s'", m)
@@ -46,7 +46,7 @@ func (d *Decoder) decodeValue(m Marker, data func(*Decoder) error) error {
 	return data(d)
 }
 
-// The assertType method reads the next marker and returns an error if it is not m.
+// assertType reads the next marker and returns an error if it is not m.
 func (d *Decoder) assertType(m Marker) error {
 	r, err := d.readMarker()
 	if err != nil {
@@ -58,7 +58,7 @@ func (d *Decoder) assertType(m Marker) error {
 	return nil
 }
 
-// The DecodeBool method decodes a 'T' or 'F' marker.
+// DecodeBool decodes a 'T' or 'F' marker.
 func (d *Decoder) DecodeBool() (bool, error) {
 	m, err := d.readValType()
 	if err != nil {
@@ -73,7 +73,7 @@ func (d *Decoder) DecodeBool() (bool, error) {
 	return false, errors.New("expected true or false marker")
 }
 
-// The DecodeUInt8 method decodes a 'U' value into a uint8.
+// DecodeUInt8 decodes a 'U' value into a uint8.
 func (d *Decoder) DecodeUInt8() (uint8, error) {
 	var v uint8
 	return v, d.decodeValue(UInt8Marker, func(*Decoder) error {
@@ -83,7 +83,7 @@ func (d *Decoder) DecodeUInt8() (uint8, error) {
 	})
 }
 
-// The DecodeInt8 method decodes an 'i' value into an int8.
+// DecodeInt8 decodes an 'i' value into an int8.
 func (d *Decoder) DecodeInt8() (int8, error) {
 	var v int8
 	return v, d.decodeValue(Int8Marker, func(*Decoder) error {
@@ -93,7 +93,7 @@ func (d *Decoder) DecodeInt8() (int8, error) {
 	})
 }
 
-// The DecodeInt16 method decodes an 'I' value into an int16.
+// DecodeInt16 decodes an 'I' value into an int16.
 func (d *Decoder) DecodeInt16() (int16, error) {
 	var v int16
 	return v, d.decodeValue(Int16Marker, func(*Decoder) error {
@@ -103,7 +103,7 @@ func (d *Decoder) DecodeInt16() (int16, error) {
 	})
 }
 
-// The DecodeInt32 method decodes an 'l' value into an int32.
+// DecodeInt32 decodes an 'l' value into an int32.
 func (d *Decoder) DecodeInt32() (int32, error) {
 	var v int32
 	return v, d.decodeValue(Int32Marker, func(*Decoder) error {
@@ -113,7 +113,7 @@ func (d *Decoder) DecodeInt32() (int32, error) {
 	})
 }
 
-// The DecodeInt64 method decodes an 'L' value into an int64.
+// DecodeInt64 decodes an 'L' value into an int64.
 func (d *Decoder) DecodeInt64() (int64, error) {
 	var v int64
 	return v, d.decodeValue(Int64Marker, func(*Decoder) error {
@@ -123,7 +123,7 @@ func (d *Decoder) DecodeInt64() (int64, error) {
 	})
 }
 
-// The DecodeInt method decodes an integer value (U,i,I,l,L) into an int.
+// DecodeInt decodes an integer value (U,i,I,l,L) into an int.
 func (d *Decoder) DecodeInt() (int, error) {
 	m, err := d.readValType()
 	if err != nil {
@@ -150,7 +150,7 @@ func (d *Decoder) DecodeInt() (int, error) {
 	}
 }
 
-// The DecodeFloat32 method decodes an 'f' value into a float32.
+// DecodeFloat32 decodes an 'f' value into a float32.
 func (d *Decoder) DecodeFloat32() (float32, error) {
 	var v float32
 	return v, d.decodeValue(Float32Marker, func(*Decoder) error {
@@ -160,7 +160,7 @@ func (d *Decoder) DecodeFloat32() (float32, error) {
 	})
 }
 
-// The DecodeFloat64 method decodes an 'F' value into a float64.
+// DecodeFloat64 decodes an 'F' value into a float64.
 func (d *Decoder) DecodeFloat64() (float64, error) {
 	var v float64
 	return v, d.decodeValue(Float64Marker, func(*Decoder) error {
@@ -170,7 +170,7 @@ func (d *Decoder) DecodeFloat64() (float64, error) {
 	})
 }
 
-// The DecodeHighPrecNumber method decodes an 'H' value into a string.
+// DecodeHighPrecNumber decodes an 'H' value into a string.
 func (d *Decoder) DecodeHighPrecNumber() (string, error) {
 	var v string
 	return v, d.decodeValue(HighPrecNumMarker, func(*Decoder) error {
@@ -180,7 +180,7 @@ func (d *Decoder) DecodeHighPrecNumber() (string, error) {
 	})
 }
 
-// The DecodeChar method decodes a 'C' value into a byte.
+// DecodeChar decodes a 'C' value into a byte.
 func (d *Decoder) DecodeChar() (byte, error) {
 	var v byte
 	return v, d.decodeValue(CharMarker, func(*Decoder) error {
@@ -190,7 +190,7 @@ func (d *Decoder) DecodeChar() (byte, error) {
 	})
 }
 
-// The DecodeString method decodes an 'S' value into a string.
+// DecodeString decodes an 'S' value into a string.
 func (d *Decoder) DecodeString() (string, error) {
 	var v string
 	return v, d.decodeValue(StringMarker, func(*Decoder) error {
@@ -266,18 +266,19 @@ func (d *Decoder) decodeInterface() (interface{}, error) {
 	}
 }
 
-func (d *Decoder) DecodeObject(fn func(*ObjectDecoder) error) error {
+// DecodeObject decodes an object container using dataFn.
+func (d *Decoder) DecodeObject(dataFn func(*ObjectDecoder) error) error {
 	return d.decodeValue(ObjectStartMarker, func(d *Decoder) error {
 		o, err := d.Object()
 		if err != nil {
 			return err
 		}
-		return fn(o)
+		return dataFn(o)
 	})
 }
 
-// The Object method begins decoding an object, and returns a specialized decoder
-// for object entries.
+// Object begins decoding an object, and returns a specialized decoder for
+// object entries.
 func (d *Decoder) Object() (*ObjectDecoder, error) {
 	m, l, err := readContainer(d)
 	if err != nil {
@@ -291,18 +292,19 @@ func (d *Decoder) Object() (*ObjectDecoder, error) {
 	return o, nil
 }
 
-func (d *Decoder) DecodeArray(fn func(*ArrayDecoder) error) error {
+// DecodeArray decodes an array container using dataFn.
+func (d *Decoder) DecodeArray(dataFn func(*ArrayDecoder) error) error {
 	return d.decodeValue(ArrayStartMarker, func(d *Decoder) error {
 		a, err := d.Array()
 		if err != nil {
 			return err
 		}
-		return fn(a)
+		return dataFn(a)
 	})
 }
 
-// The Array method begins decoding an array, and returns a specialized decoder
-// for array elements.
+// Array begins decoding an array, and returns a specialized decoder for array
+// elements.
 func (d *Decoder) Array() (*ArrayDecoder, error) {
 	m, l, err := readContainer(d)
 	if err != nil {
@@ -332,8 +334,8 @@ type ObjectDecoder struct {
 	err error
 }
 
-// The readValType method increments and validates the count, and validate the
-// type either from the stream or from o.valType.
+// readValType increments and validates the count, and validate the type either
+// from the stream or from o.valType.
 func (o *ObjectDecoder) readValType() (Marker, error) {
 	o.count++
 	if o.Len >= 0 && o.count > 2*o.Len {
@@ -349,7 +351,7 @@ func (o *ObjectDecoder) readValType() (Marker, error) {
 	}
 }
 
-// The DecodeKey method reads an object key.
+// DecodeKey reads an object key.
 func (o *ObjectDecoder) DecodeKey() (string, error) {
 	o.count++
 	if o.Len >= 0 && o.count > 2*o.Len {
@@ -361,8 +363,8 @@ func (o *ObjectDecoder) DecodeKey() (string, error) {
 	return o.readString()
 }
 
-// Returns true if more entries are expected, or false if the end has been
-// reached or an error was encountered, in which case End() will return the
+// NextEntry returns true if more entries are expected, or false if the end has
+// been reached or an error was encountered, in which case End() will return the
 // deferred error.
 func (o *ObjectDecoder) NextEntry() bool {
 	if o.Len < 0 {
@@ -376,9 +378,9 @@ func (o *ObjectDecoder) NextEntry() bool {
 	return o.count < 2*o.Len
 }
 
-// The End method completes object decoding and must be called.
-// It may return errors (1) deferred from entry decoding, (2) from a missing
-// object end marker, or (3) from a length vs. count mismatch.
+// End completes object decoding and must be called. It may return errors (1)
+// deferred from entry decoding, (2) from a missing object end marker, or (3)
+// from a length vs. count mismatch.
 func (o *ObjectDecoder) End() error {
 	if o.err != nil {
 		return o.err
@@ -413,8 +415,8 @@ type ArrayDecoder struct {
 	err error
 }
 
-// The readElemType method increments and validates the count, and returns the
-// type either from the stream or from a.ElemType.
+// readElemType increments and validates the count, and returns the type either
+// from the stream or from a.ElemType.
 func (a *ArrayDecoder) readElemType() (Marker, error) {
 	a.count++
 	if a.Len >= 0 && a.count > a.Len {
@@ -427,9 +429,9 @@ func (a *ArrayDecoder) readElemType() (Marker, error) {
 	}
 }
 
-// The NextElem method returns true when there is another element to decode, or
-// false if the end of the array has been reached or an error is encountered, in
-// which case it will be returned by the End method.
+// NextElem returns true when there is another element to decode, or false if
+// the end of the array has been reached or an error is encountered, in which
+// case it will be returned by the End method.
 func (a *ArrayDecoder) NextElem() bool {
 	if a.Len < 0 {
 		m, err := a.peekMarker()
@@ -442,9 +444,9 @@ func (a *ArrayDecoder) NextElem() bool {
 	return a.count < a.Len
 }
 
-// The End method completes array decoding and must be called.
-// It may return errors (1) deferred from element decoding, (2) from a missing
-// array end marker, or (3) from a length vs. count mismatch.
+// End completes array decoding and must be called. It may return errors (1)
+// deferred from element decoding, (2) from a missing array end marker, or (3)
+// from a length vs. count mismatch.
 func (a *ArrayDecoder) End() error {
 	if a.err != nil {
 		return a.err
@@ -463,9 +465,9 @@ func (a *ArrayDecoder) End() error {
 	return nil
 }
 
-// The Decode method decodes a value into v by delegating to the appropriate
-// type-specific method. Recognizes the special types Char and HighPrecNumber to
-// distinguish from backing types.
+// Decode decodes a value into v by delegating to the appropriate type-specific
+// method. Recognizes the special types Char and HighPrecNumber to distinguish
+// from backing types.
 func (d *Decoder) Decode(v interface{}) error {
 	if v == nil {
 		return errors.New("cannot decode into nil value")
@@ -591,8 +593,8 @@ func (d *Decoder) Decode(v interface{}) error {
 	return fmt.Errorf("unable to decode this type of value: %T %v", v, v)
 }
 
-// The arrayToArray function returns a function to decode an array container
-// into arrayPtr.Elem(). Returns an error if the lengths are not equal.
+// arrayToArray returns a function to decode an array container into
+// arrayPtr.Elem(). Returns an error if the lengths are not equal.
 func arrayToArray(arrayPtr reflect.Value) func(*Decoder) error {
 	return func(d *Decoder) error {
 		ad, err := d.Array()
@@ -618,8 +620,8 @@ func arrayToArray(arrayPtr reflect.Value) func(*Decoder) error {
 	}
 }
 
-// The arrayToSlice function returns a function to decode an array container
-// into slicePtr.Elem().
+// arrayToSlice returns a function to decode an array container into
+// slicePtr.Elem().
 func arrayToSlice(slicePtr reflect.Value) func(*Decoder) error {
 	return func(d *Decoder) error {
 		ad, err := d.Array()
@@ -708,7 +710,7 @@ func objectIntoMap(mapPtr reflect.Value) func(*Decoder) error {
 	}
 }
 
-// The objectAsInterface function reads an object and returns a map[string]T where T is
+// objectAsInterface reads an object and returns a map[string]T where T is
 // either interface{} or a stricter type if the object is strongly typed.
 func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	valType := elementTypeFor(o.ValType)
@@ -731,8 +733,8 @@ func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	return mapValue.Interface(), o.End()
 }
 
-// The arrayAsInterface function reads an array container into a new slice []T, where T
-// may be strongly typed, or an interface{} in the general case.
+// arrayAsInterface reads an array container into a new slice []T, where T may
+// be strongly typed, or an interface{} in the general case.
 func arrayAsInterface(a *ArrayDecoder) (interface{}, error) {
 	var sliceValue reflect.Value
 	elemType := elementTypeFor(a.ElemType)
@@ -769,8 +771,8 @@ func arrayAsInterface(a *ArrayDecoder) (interface{}, error) {
 var iface interface{}
 var ifaceType = reflect.TypeOf(&iface).Elem()
 
-// The elementTypeFor function returns the type into which data with this marker
-// should be decoded, falling back to interface{} in the general case.
+// elementTypeFor returns the type into which data with this marker should be
+// decoded, falling back to interface{} in the general case.
 func elementTypeFor(m Marker) reflect.Type {
 	switch m {
 	case TrueMarker, FalseMarker:
