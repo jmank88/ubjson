@@ -112,7 +112,7 @@ func ExampleHighPrecNumber() {
 		fmt.Println(string(b))
 	}
 
-	hNumber := ubjson.HighPrecNumber("1234567890.657483921")
+	hNumber := ubjson.HighPrecNumber(number)
 	if b, err := ubjson.MarshalBlock(hNumber); err != nil {
 		fmt.Println("error: " + err.Error())
 	} else {
