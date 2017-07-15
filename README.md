@@ -2,22 +2,30 @@
 
 A Go package implementing encoding and decoding of [Universal Binary JSON](http://ubjson.org/) (spec 12).
 
-## Usage
+## Features
 
-Most types can be automatically encoded through reflection with the Marshal
-and Unmarshal functions. Encoders and Decoders additionally provide type
-specific methods. Custom encodings can be defined by implementing the Value
-interface.
+- Type specific methods for built-in types.
+
+- Automatic encoding via reflection for most types.
+
+- Custom encoding via Value interface.
+
+- Streaming support via Encoder/Decoder.
+
+## Usage
 
 ```go
 b, _ := ubjson.MarshalBlock(8)
 // [U][8]
+
 b, _ = ubjson.MarshalBlock("hello")
 // [S][U][5][hello]
+
 var v interface{}
 ...
 b, _ = ubjson.Marshal(v)
 // ...
 ```
 
-See the [GoDoc](https://godoc.org/github.com/jmank88/ubjson) for more information.
+See the [GoDoc](https://godoc.org/github.com/jmank88/ubjson) for more
+information and [examples](https://godoc.org/github.com/jmank88/ubjson#pkg-examples).
