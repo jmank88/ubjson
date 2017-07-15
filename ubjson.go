@@ -10,7 +10,9 @@
 //	// [U][8]
 //	b, _ = ubjson.MarshalBlock("hello")
 //	// [S][U][5][hello]
-//	b, _ = ubjson.Marshal("test")
+//	var v interface{}
+//	...
+//	b, _ = ubjson.Marshal(v)
 //	// ...
 //
 package ubjson
