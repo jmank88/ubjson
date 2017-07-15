@@ -12,6 +12,10 @@ A Go package implementing encoding and decoding of [Universal Binary JSON](http:
 
 - Streaming support via Encoder/Decoder.
 
+- Support for [optimized format](http://ubjson.org/type-reference/container-types/#optimized-format).
+
+- Block format.
+
 ## Usage
 
 ```go
