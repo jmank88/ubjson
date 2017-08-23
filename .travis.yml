@@ -6,4 +6,4 @@ go:
 
 install:
     - go get -u github.com/golang/dep/...
-    - dep ensure -v
+    - dep ensure -vendor-only
