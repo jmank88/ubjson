@@ -494,7 +494,7 @@ func encodeArray(arrayValue reflect.Value) func(*Encoder) error {
 
 		for i := 0; i < arrayValue.Len(); i++ {
 			if err := ae.Encode(arrayValue.Index(i).Interface()); err != nil {
-				return err
+				return errors.Wrapf(err, "failed to encode array element %d", i)
 			}
 		}
 
@@ -526,10 +526,10 @@ func encodeMap(mapValue reflect.Value) func(*Encoder) error {
 
 		for _, key := range keys {
 			if err := o.EncodeKey(key.String()); err != nil {
-				return err
+				return errors.Wrapf(err, "failed to encode key %q", key.String())
 			}
 			if err := o.Encode(mapValue.MapIndex(key).Interface()); err != nil {
-				return err
+				return errors.Wrapf(err, "failed to encode value for key %q", key.String())
 			}
 		}
 
