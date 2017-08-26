@@ -669,8 +669,7 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 	return func(o *ObjectDecoder) error {
 		mapValue := mapPtr.Elem()
-		//TODO go1.9 - MakeMapWithSize
-		mapValue.Set(reflect.MakeMap(mapValue.Type()))
+		mapValue.Set(makeMap(mapValue.Type(), o.Len))
 		elemType := mapValue.Type().Elem()
 
 		for o.NextEntry() {
@@ -697,8 +696,7 @@ func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	valType := elementTypeFor(o.ValType)
 	mapType := reflect.MapOf(stringType, valType)
 
-	//TODO go1.9 - MakeMapWithSize
-	mapValue := reflect.MakeMap(mapType)
+	mapValue := makeMap(mapType, o.Len)
 	for o.NextEntry() {
 		k, err := o.DecodeKey()
 		if err != nil {
