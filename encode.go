@@ -455,9 +455,8 @@ func (e *Encoder) Encode(v interface{}) error {
 		return e.encode(ArrayStartMarker, encodeArray(value))
 
 	case reflect.Map:
-		if value.Type().Key().Kind() != reflect.String &&
-			!value.Type().Key().ConvertibleTo(stringType) {
-			return fmt.Errorf("unable to encode map of type %s: key type must be string", value.Type())
+		if k := value.Type().Key().Kind(); k != reflect.String {
+			return fmt.Errorf("unable to encode map of type %s: key reflect.Kind must be reflect.String but is %s", value.Type(), k)
 		}
 		return e.encode(ObjectStartMarker, encodeMap(value))
 
