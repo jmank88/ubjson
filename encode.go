@@ -102,7 +102,8 @@ func (e *Encoder) EncodeInt64(v int64) error {
 
 // EncodeInt encodes an int in the smallest possible integer format (U,i,L,l,L).
 func (e *Encoder) EncodeInt(v int) error {
-	switch smallestIntMarker(int64(v)) {
+	m := smallestIntMarker(int64(v))
+	switch m {
 	case UInt8Marker:
 		return e.EncodeUInt8(uint8(v))
 	case Int8Marker:
@@ -113,8 +114,9 @@ func (e *Encoder) EncodeInt(v int) error {
 		return e.EncodeInt32(int32(v))
 	case Int64Marker:
 		return e.EncodeInt64(int64(v))
+	default:
+		return errors.Errorf("unsupported marker: %s", string(m))
 	}
-	return errors.New("TODO unreachable, programmere marker error")
 }
 
 // EncodeFloat32 encodes a float32 as an 'f'.
