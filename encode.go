@@ -528,7 +528,9 @@ func encodeMap(mapValue reflect.Value) func(*Encoder) error {
 			if err := o.EncodeKey(key.String()); err != nil {
 				return err
 			}
-			o.Encode(mapValue.MapIndex(key).Interface())
+			if err := o.Encode(mapValue.MapIndex(key).Interface()); err != nil {
+				return err
+			}
 		}
 
 		return o.End()
