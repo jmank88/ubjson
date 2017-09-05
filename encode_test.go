@@ -8,31 +8,33 @@ import (
 
 func TestMarshal(t *testing.T) {
 	t.Parallel()
-	for name, testCase := range testData {
-		t.Run(name, func(t *testing.T) {
-			b, err := Marshal(testCase.value)
-			if err != nil {
-				t.Fatal("failed to marshal:", err.Error())
-			}
-			if diff := firstBytesDiff(testCase.binary, b); diff.index != -1 {
-				t.Errorf("(%T) %v:\n %s\n expected:\n %#v\n\n  but got:\n %#v\n\n",
-					testCase.value, testCase.value, diff, testCase.binary, b)
-			}
-		})
+	for name, testCase := range cases {
+		t.Run(name, testCase.marshal)
+	}
+}
+
+func (tc *testCase) marshal(t *testing.T) {
+	if b, err := Marshal(tc.value); err != nil {
+		t.Fatal("failed to marshal:", err.Error())
+	} else if diff := firstBytesDiff(tc.binary, b); diff.index != -1 {
+		t.Errorf("(%T) %v:\n %s\n expected:\n %#v\n\n  but got:\n %#v\n\n",
+			tc.value, tc.value, diff, tc.binary, b)
 	}
 }
 
 func TestMarshalBlock(t *testing.T) {
 	t.Parallel()
-	for name, testCase := range testData {
-		t.Run(name, func(t *testing.T) {
-			if b, err := MarshalBlock(testCase.value); err != nil {
-				t.Fatal("failed to marshal block:", err.Error())
-			} else if diff := firstStringDiff(testCase.block, string(b)); diff != noStringDiff {
-				t.Errorf("(%T) %v:\n %s\n expected:\n %q\n\n  but got:\n %q\n\n",
-					testCase.value, testCase.value, diff, testCase.block, string(b))
-			}
-		})
+	for name, testCase := range cases {
+		t.Run(name, testCase.marshalBlock)
+	}
+}
+
+func (tc *testCase) marshalBlock(t *testing.T) {
+	if b, err := MarshalBlock(tc.value); err != nil {
+		t.Fatal("failed to marshal block:", err.Error())
+	} else if diff := firstStringDiff(tc.block, string(b)); diff != noStringDiff {
+		t.Errorf("(%T) %v:\n %s\n expected:\n %q\n\n  but got:\n %q\n\n",
+			tc.value, tc.value, diff, tc.block, string(b))
 	}
 }
 

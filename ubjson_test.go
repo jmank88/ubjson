@@ -46,11 +46,13 @@ type Values struct {
 	HighPrecNumberPtr *HighPrecNumber
 }
 
-var testData = map[string]struct {
+type testCase struct {
 	value  interface{}
 	binary []byte
 	block  string
-}{
+}
+
+var cases = map[string]testCase{
 	"Int=0":   {int(0), []byte{'U', 0x00}, "[U][0]"},
 	"Int=255": {int(255), []byte{'U', 0xFF}, "[U][255]"},
 	"UInt=80": {uint8(0), []byte{'U', 0x00}, "[U][0]"},
