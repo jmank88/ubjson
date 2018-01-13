@@ -653,10 +653,10 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to decode key with call #%d", o.count)
 			}
-
-			f := structPtr.Elem().FieldByName(k)
+			structValue := structPtr.Elem()
+			f := fieldByName(structValue, k)
 			if f == zeroValue {
-				return errors.Errorf("unable to decode entry: no field named %q found", k)
+				return errors.Errorf("unable to decode entry: no field found named/tagged %q", k)
 			}
 			if err := o.Decode(f.Addr().Interface()); err != nil {
 				return errors.Wrapf(err, "failed to decode value for %q with call #%d", k, o.count)
@@ -664,6 +664,16 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 		}
 		return o.End()
 	}
+}
+
+// fieldByName looks up a field by name. Either the field name, or the overridden
+// 'ubjson' struct tag name.
+func fieldByName(structValue reflect.Value, k string) reflect.Value {
+	fs := cachedTypeFields(structValue.Type())
+	if i, ok := fs.indexByName[k]; ok {
+		return structValue.Field(i)
+	}
+	return reflect.Value{}
 }
 
 func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {

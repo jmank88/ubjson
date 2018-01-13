@@ -4,7 +4,7 @@
 // Most types can be automatically encoded through reflection with the Marshal
 // and Unmarshal functions. Encoders and Decoders additionally provide type
 // specific methods. Custom encodings can be defined by implementing the Value
-// interface.
+// interface. 'ubjson' struct tags can be used to override field names.
 //
 //	b, _ := ubjson.MarshalBlock(8)
 //	// [U][8]
