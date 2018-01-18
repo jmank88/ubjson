@@ -112,6 +112,18 @@ var cases = map[string]testCase{
 			'}'},
 		"[{]\n\t[U][1][A][i][5]\n\t[U][1][B][i][8]\n[}]",
 	},
+	"Object-Int8=struct-tagged": {
+		struct {
+			A int8 `ubjson:"a"`
+			a int  // Ignored - Exercises field index logic.
+			B int8 `json:"wrong" ubjson:"b"`
+		}{5, 0, 8},
+		[]byte{'{',
+			'U', 0x01, 'a', 'i', 0x05,
+			'U', 0x01, 'b', 'i', 0x08,
+			'}'},
+		"[{]\n\t[U][1][a][i][5]\n\t[U][1][b][i][8]\n[}]",
+	},
 
 	"Object=complex-struct": {complexStruct, complexStructBinary, complexStructBlock},
 	"Object=complex-map":    {complexMap, complexMapBinary, complexMapBlock},

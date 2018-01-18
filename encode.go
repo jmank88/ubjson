@@ -549,16 +549,18 @@ func encodeStruct(structValue reflect.Value) func(*Encoder) error {
 		if err != nil {
 			return err
 		}
-		for i := 0; i < structValue.NumField(); i++ {
-			f := structValue.Type().Field(i)
-			if f.PkgPath == "" {
-				if err := o.EncodeKey(f.Name); err != nil {
-					return errors.Wrapf(err, "failed to encode key %q", f.Name)
-				}
-				val := structValue.Field(i).Interface()
-				if err := o.Encode(val); err != nil {
-					return errors.Wrapf(err, "failed to encode value for key %q", f.Name)
-				}
+		fs := cachedTypeFields(structValue.Type())
+		for _, name := range fs.names {
+			i, ok := fs.indexByName[name]
+			if !ok {
+				panic("invalid cached type info: no index for field " + name)
+			}
+			if err := o.EncodeKey(name); err != nil {
+				return errors.Wrapf(err, "failed to encode key %q", name)
+			}
+			val := structValue.Field(i).Interface()
+			if err := o.Encode(val); err != nil {
+				return errors.Wrapf(err, "failed to encode value for key %q", name)
 			}
 		}
 
