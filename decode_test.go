@@ -44,3 +44,26 @@ func (tc *testCase) unmarshalBlock(t *testing.T) {
 			expected, expected, actual.Elem().Interface(), actual.Elem().Interface())
 	}
 }
+
+func TestUnmarshalDiscardUnknownFields(t *testing.T) {
+	type val struct{ A int8 }
+
+	exp := val{8}
+	var got val
+
+	bin := []byte{'{', 'U', 0x01, 'A', 'i', 0x08, 'U', 0x01, 'b', 'i', 0x05, '}'}
+
+	if err := Unmarshal(bin, &got); err != nil {
+		t.Fatal(err)
+	} else if got != exp {
+		t.Errorf("\nexpected: %T %v \nbut got:  %T %v", exp, exp, got, got)
+	}
+
+	block := "[{]\n\t[U][1][A][i][8]\n\t[U][1][B][i][5]\n[}]"
+
+	if err := UnmarshalBlock([]byte(block), &got); err != nil {
+		t.Fatal(err)
+	} else if got != exp {
+		t.Errorf("\nexpected: %T %v \nbut got:  %T %v", exp, exp, got, got)
+	}
+}

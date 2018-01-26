@@ -656,9 +656,12 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 			structValue := structPtr.Elem()
 			f := fieldByName(structValue, k)
 			if f == zeroValue {
-				return errors.Errorf("unable to decode entry: no field found named/tagged %q", k)
-			}
-			if err := o.Decode(f.Addr().Interface()); err != nil {
+				// Discard value with no matching field.
+				// TODO could be more efficient with custom discardValue() method
+				if _, err := o.decodeInterface(); err != nil {
+					return errors.Wrapf(err, "failed to discard value for %q with call #%d", k, o.count)
+				}
+			} else if err := o.Decode(f.Addr().Interface()); err != nil {
 				return errors.Wrapf(err, "failed to decode value for %q with call #%d", k, o.count)
 			}
 		}
