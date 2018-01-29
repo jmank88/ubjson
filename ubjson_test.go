@@ -83,6 +83,10 @@ var cases = map[string]testCase{
 
 	"string=string": {"string", append([]byte{'S', 0x55, 0x06}, "string"...), "[S][U][6][string]"},
 
+	"Array-empty": {[0]int{}, []byte{0x5b, 0x23, 0x55, 0x0}, "[[][#][U][0]"},
+
+	"Slice-empty": {[]int{}, []byte{0x5b, 0x23, 0x55, 0x0}, "[[][#][U][0]"},
+
 	"Array-UInt8=byte-array": {[2]byte{0x4C, 0x7F}, []byte{'[', '$', 'U', '#', 'U', 0x02, 0x4C, 0x7F},
 		"[[][$][U][#][U][2]\n\t[76]\n\t[127]"},
 

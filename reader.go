@@ -27,7 +27,7 @@ type reader interface {
 	readFloat32() (float32, error)
 	readFloat64() (float64, error)
 
-	readString() (string, error)
+	readString(max int) (string, error)
 	readChar() (byte, error)
 }
 
@@ -84,6 +84,9 @@ func readContainer(r reader) (Marker, int, error) {
 		if err != nil {
 			return 0, 0, err
 		}
+		if l < 0 {
+			return 0, 0, errors.Errorf("illegal negative container length: %d", l)
+		}
 		return m, l, nil
 
 	case countMarker:
@@ -93,6 +96,9 @@ func readContainer(r reader) (Marker, int, error) {
 		l, err := readInt(r)
 		if err != nil {
 			return 0, 0, err
+		}
+		if l < 0 {
+			return 0, 0, errors.Errorf("illegal negative container length: %d", l)
 		}
 		return 0, l, nil
 
@@ -200,10 +206,16 @@ func (r *binaryReader) readFloat64() (float64, error) {
 	return math.Float64frombits(binary.BigEndian.Uint64(b)), err
 }
 
-func (r *binaryReader) readString() (string, error) {
+func (r *binaryReader) readString(max int) (string, error) {
 	l, err := readInt(r)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read string length prefix")
+	}
+	if l < 1 {
+		return "", errors.Errorf("illegal string length prefix: %d", l)
+	}
+	if l > max {
+		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	b := make([]byte, l)
 	n, err := r.Read(b)
@@ -280,8 +292,8 @@ func (r *blockReader) readMarker() (Marker, error) {
 	if err != nil {
 		return 0, err
 	}
-	if len(s) > 1 {
-		return 0, fmt.Errorf("expected single byte marker, but found: %s", s)
+	if len(s) != 1 {
+		return 0, fmt.Errorf("expected single byte marker, but found: %q", s)
 	}
 	return Marker(s[0]), nil
 }
@@ -359,10 +371,16 @@ func (r *blockReader) readFloat64() (float64, error) {
 	return f, err
 }
 
-func (r *blockReader) readString() (string, error) {
+func (r *blockReader) readString(max int) (string, error) {
 	l, err := readInt(r)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read string length prefix")
+	}
+	if l < 1 {
+		return "", errors.Errorf("illegal string length prefix: %d", l)
+	}
+	if l > max {
+		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	s, err := r.nextBlock()
 	if err != nil {
@@ -379,8 +397,8 @@ func (r *blockReader) readChar() (byte, error) {
 	if err != nil {
 		return 0, err
 	}
-	if len(s) > 1 {
-		return 0, fmt.Errorf("expected single byte Char, but found: %s", s)
+	if len(s) != 1 {
+		return 0, fmt.Errorf("expected single byte Char, but found: %q", s)
 	}
 	b := s[0]
 	if b > 127 {

@@ -8,25 +8,34 @@ import (
 	"github.com/pkg/errors"
 )
 
-// An Decoder provides methods for decoding UBJSON data types.
+// MaxCollectionAlloc is the default maximum collection capacity allocation.
+// Can be overridden via Decoder.MaxCollectionAlloc.
+const MaxCollectionAlloc = 1 << 24
+
+// Decoder provides methods for decoding UBJSON data types.
 type Decoder struct {
 	reader
-	// The readValType function is called to get the next value's type
-	// marker. Normally it reads the next marker, but strongly typed
+	// readValType is called to get the next value's type marker.
+	// Normally just reads the next marker, but strongly typed
 	// containers will do an internal check and also manage counters.
 	readValType func() (Marker, error)
+	// Limits the capacity of allocated collections and returns errors rather
+	// than risking waste or panicking on unreasonable/malicious input.
+	// Example: "[[][$][T][#][l][999999999999999999]".
+	// New Decoders default to package const MaxCollectionAlloc.
+	MaxCollectionAlloc int
 }
 
 // NewDecoder returns a new Decoder.
 func NewDecoder(r io.Reader) *Decoder {
-	d := &Decoder{reader: newBinaryReader(r)}
+	d := &Decoder{reader: newBinaryReader(r), MaxCollectionAlloc: MaxCollectionAlloc}
 	d.readValType = d.readMarker
 	return d
 }
 
 // NewBlockDecoder returns a new block-notation Decoder.
 func NewBlockDecoder(r io.Reader) *Decoder {
-	d := &Decoder{reader: newBlockReader(r)}
+	d := &Decoder{reader: newBlockReader(r), MaxCollectionAlloc: MaxCollectionAlloc}
 	d.readValType = d.readMarker
 	return d
 }
@@ -175,7 +184,7 @@ func (d *Decoder) DecodeHighPrecNumber() (string, error) {
 	var v string
 	return v, d.decodeValue(HighPrecNumMarker, func(*Decoder) error {
 		var err error
-		v, err = d.readString()
+		v, err = d.readString(d.MaxCollectionAlloc)
 		return err
 	})
 }
@@ -195,7 +204,7 @@ func (d *Decoder) DecodeString() (string, error) {
 	var v string
 	return v, d.decodeValue(StringMarker, func(*Decoder) error {
 		var err error
-		v, err = d.readString()
+		v, err = d.readString(d.MaxCollectionAlloc)
 		return err
 	})
 }
@@ -237,10 +246,10 @@ func (d *Decoder) decodeInterface() (interface{}, error) {
 		return d.readFloat64()
 
 	case StringMarker:
-		return d.readString()
+		return d.readString(d.MaxCollectionAlloc)
 
 	case HighPrecNumMarker:
-		s, err := d.readString()
+		s, err := d.readString(d.MaxCollectionAlloc)
 		return HighPrecNumber(s), err
 
 	case CharMarker:
@@ -284,9 +293,14 @@ func (d *Decoder) Object() (*ObjectDecoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	o := &ObjectDecoder{ValType: m, Len: l}
-
-	o.Decoder.reader = d.reader
+	o := &ObjectDecoder{
+		Decoder: Decoder{
+			reader:             d.reader,
+			MaxCollectionAlloc: d.MaxCollectionAlloc,
+		},
+		ValType: m,
+		Len:     l,
+	}
 	o.Decoder.readValType = o.readValType
 
 	return o, nil
@@ -311,9 +325,14 @@ func (d *Decoder) Array() (*ArrayDecoder, error) {
 		return nil, err
 	}
 
-	a := &ArrayDecoder{ElemType: m, Len: l}
-
-	a.Decoder.reader = d.reader
+	a := &ArrayDecoder{
+		Decoder: Decoder{
+			reader:             d.reader,
+			MaxCollectionAlloc: d.MaxCollectionAlloc,
+		},
+		ElemType: m,
+		Len:      l,
+	}
 	a.Decoder.readValType = a.readElemType
 
 	return a, nil
@@ -359,7 +378,7 @@ func (o *ObjectDecoder) DecodeKey() (string, error) {
 	if o.count%2 == 0 {
 		return "", errors.New("unable to decode key: expected value")
 	}
-	return o.readString()
+	return o.readString(o.MaxCollectionAlloc)
 }
 
 // NextEntry returns true if more entries are expected, or false if the end has
@@ -629,6 +648,8 @@ func arrayToSlice(slicePtr reflect.Value) func(*ArrayDecoder) error {
 				}
 				sliceValue = reflect.Append(sliceValue, elemPtr.Elem())
 			}
+		} else if ad.Len > ad.MaxCollectionAlloc {
+			return errors.Errorf("collection exceeds max allocation limit of %d: %d", ad.MaxCollectionAlloc, ad.Len)
 		} else {
 			sliceValue.Set(reflect.MakeSlice(sliceValue.Type(), ad.Len, ad.Len))
 
@@ -681,6 +702,9 @@ func fieldByName(structValue reflect.Value, k string) reflect.Value {
 
 func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 	return func(o *ObjectDecoder) error {
+		if o.Len > o.MaxCollectionAlloc {
+			return errors.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
+		}
 		mapValue := mapPtr.Elem()
 		mapValue.Set(makeMap(mapValue.Type(), o.Len))
 		elemType := mapValue.Type().Elem()
@@ -706,9 +730,11 @@ func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 // objectAsInterface reads an object and returns a map[string]T where T is
 // either interface{} or a stricter type if the object is strongly typed.
 func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
+	if o.Len > o.MaxCollectionAlloc {
+		return nil, errors.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
+	}
 	valType := elementTypeFor(o.ValType)
 	mapType := reflect.MapOf(stringType, valType)
-
 	mapValue := makeMap(mapType, o.Len)
 	for o.NextEntry() {
 		k, err := o.DecodeKey()
@@ -741,6 +767,8 @@ func arrayAsInterface(a *ArrayDecoder) (interface{}, error) {
 			}
 			sliceValue = reflect.Append(sliceValue, elemPtr.Elem())
 		}
+	} else if a.Len > a.MaxCollectionAlloc {
+		return "", errors.Errorf("collection exceeds max allocation limit of %d: %d", a.MaxCollectionAlloc, a.Len)
 	} else {
 		sliceValue = reflect.MakeSlice(sliceType, a.Len, a.Len)
 

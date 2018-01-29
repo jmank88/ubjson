@@ -8,11 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// An Encoder provides methods for encoding UBJSON data types.
+// Encoder provides methods for encoding UBJSON data types.
 type Encoder struct {
 	writer
-	// Function to write value type markers. Normally writeMarker, but
-	// overridden by containers to do validation and optimization.
+	// writeValType is called to write value type markers.
+	// Normally (*Encoder).writeMarker, but overridden by
+	// containers to do validation and optimization.
 	writeValType func(Marker) error
 }
 
