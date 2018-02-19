@@ -135,3 +135,17 @@ func TestDecoder_maxCollectionAlloc(t *testing.T) {
 		t.Error("expected error")
 	}
 }
+
+func TestFuzzUnmarshalBlock_strong_type_NoOp_array(t *testing.T) {
+	var i interface{}
+	if UnmarshalBlock([]byte("[[][$][N][#][I][512]"), &i) == nil {
+		t.Errorf("expected failure but got: %v", i)
+	}
+}
+
+func TestFuzzUnmarshalBlock_strong_type_NoOp_object(t *testing.T) {
+	var i interface{}
+	if UnmarshalBlock([]byte("[{][$][N][#][i][1][i][4][name]"), &i) == nil {
+		t.Errorf("expected failure but got: %v", i)
+	}
+}
