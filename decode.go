@@ -733,6 +733,9 @@ func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	if o.Len > o.MaxCollectionAlloc {
 		return nil, errors.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
 	}
+	if o.ValType == NoOpMarker {
+		return nil, errors.New("No-Op (N) is not a legal strong type")
+	}
 	valType := elementTypeFor(o.ValType)
 	mapType := reflect.MapOf(stringType, valType)
 	mapValue := makeMap(mapType, o.Len)
@@ -755,6 +758,9 @@ func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 // be strongly typed, or an interface{} in the general case.
 func arrayAsInterface(a *ArrayDecoder) (interface{}, error) {
 	var sliceValue reflect.Value
+	if a.ElemType == NoOpMarker {
+		return nil, errors.New("No-Op (N) is not a legal strong type")
+	}
 	elemType := elementTypeFor(a.ElemType)
 	sliceType := reflect.SliceOf(elemType)
 
