@@ -211,7 +211,7 @@ func (r *binaryReader) readString(max int) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read string length prefix")
 	}
-	if l < 1 {
+	if l < 0 {
 		return "", errors.Errorf("illegal string length prefix: %d", l)
 	}
 	if l > max {
