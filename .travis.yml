@@ -5,6 +5,5 @@ go:
     - 1.12.x
     - tip
 
-install:
-    - go get -u github.com/golang/dep/...
-    - dep ensure -vendor-only
+env:
+    - GO111MODULE=on
