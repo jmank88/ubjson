@@ -211,10 +211,12 @@ func (r *binaryReader) readString(max int) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read string length prefix")
 	}
-	if l < 1 {
+	switch {
+	case l == 0:
+		return "", nil
+	case l < 0:
 		return "", errors.Errorf("illegal string length prefix: %d", l)
-	}
-	if l > max {
+	case l > max:
 		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	b := make([]byte, l)
@@ -376,10 +378,12 @@ func (r *blockReader) readString(max int) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read string length prefix")
 	}
-	if l < 1 {
+	switch {
+	case l == 0:
+		return "", nil
+	case l < 0:
 		return "", errors.Errorf("illegal string length prefix: %d", l)
-	}
-	if l > max {
+	case l > max:
 		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	s, err := r.nextBlock()

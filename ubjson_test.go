@@ -82,6 +82,7 @@ var cases = map[string]testCase{
 	"C=a": {Char('a'), []byte{'C', 0x61}, "[C][a]"},
 
 	"string=string": {"string", append([]byte{'S', 0x55, 0x06}, "string"...), "[S][U][6][string]"},
+	"string=empty": {"", []byte{'S', 0x55, 0x00}, "[S][U][0]"},
 
 	"Array-empty": {[0]int{}, []byte{0x5b, 0x23, 0x55, 0x0}, "[[][#][U][0]"},
 
