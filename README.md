@@ -1,4 +1,5 @@
-# UBJSON [![GoDoc](https://godoc.org/github.com/jmank88/ubjson?status.svg)](https://godoc.org/github.com/jmank88/ubjson) [![Build Status](https://travis-ci.org/jmank88/ubjson.svg)](https://travis-ci.org/jmank88/ubjson) [![Go Report Card](https://goreportcard.com/badge/github.com/jmank88/ubjson)](https://goreportcard.com/report/github.com/jmank88/ubjson)
+# UBJSON [![GoDoc](https://godoc.org/github.com/jmank88/ubjson?status.svg)](https://godoc.org/github.com/jmank88/ubjson) [![Build Status](https://github.com/jmank88/ubjson/workflows/Go%20Build%20and%20Test/badge.svg)](https://github.com/jmank88/ubjson/actions)
+ [![Go Report Card](https://goreportcard.com/badge/github.com/jmank88/ubjson)](https://goreportcard.com/report/github.com/jmank88/ubjson)
 
 A Go package implementing encoding and decoding of [Universal Binary JSON](http://ubjson.org/) (spec 12).
 
