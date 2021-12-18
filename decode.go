@@ -838,5 +838,5 @@ var (
 	float64Type     = reflect.TypeOf(float64(3.14))
 	stringType      = reflect.TypeOf("")
 	charType        = reflect.TypeOf(Char(0))
-	highPrecNumType = reflect.TypeOf(HighPrecNumber(0))
+	highPrecNumType = reflect.TypeOf(HighPrecNumber(""))
 )
