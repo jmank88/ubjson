@@ -16,36 +16,6 @@ func init() {
 	}
 }
 
-// A Values struct holds one of each primitive type with a corresponding
-// Encode/Decode UBJSON value method.
-type Values struct {
-	Int            int
-	UInt8          uint8
-	Int8           int8
-	Int16          int16
-	Int32          int32
-	Int64          int64
-	Float32        float32
-	Float64        float64
-	Bool           bool
-	String         string
-	Char           Char
-	HighPrecNumber HighPrecNumber
-
-	IntPtr            *int
-	UInt8Ptr          *uint8
-	Int8Ptr           *int8
-	Int16Ptr          *int16
-	Int32Ptr          *int32
-	Int64Ptr          *int64
-	Float32Ptr        *float32
-	Float64Ptr        *float64
-	BoolPtr           *bool
-	StringPtr         *string
-	CharPtr           *Char
-	HighPrecNumberPtr *HighPrecNumber
-}
-
 type testCase struct {
 	value  interface{}
 	binary []byte
@@ -82,7 +52,7 @@ var cases = map[string]testCase{
 	"C=a": {Char('a'), []byte{'C', 0x61}, "[C][a]"},
 
 	"string=string": {"string", append([]byte{'S', 0x55, 0x06}, "string"...), "[S][U][6][string]"},
-	"string=empty": {"", []byte{'S', 0x55, 0x00}, "[S][U][0]"},
+	"string=empty":  {"", []byte{'S', 0x55, 0x00}, "[S][U][0]"},
 
 	"Array-empty": {[0]int{}, []byte{0x5b, 0x23, 0x55, 0x0}, "[[][#][U][0]"},
 
@@ -132,6 +102,12 @@ var cases = map[string]testCase{
 
 	"Object=complex-struct": {complexStruct, complexStructBinary, complexStructBlock},
 	"Object=complex-map":    {complexMap, complexMapBinary, complexMapBlock},
+
+	// fuzz trophies
+	"Array-Char": {[]Char{'a'}, []byte{'[', '$', 'C', '#', 'U', 0x01, 'a'},
+		"[[][$][C][#][U][1]\n\t[a]"},
+	"Array-HighPrecNumber": {[]HighPrecNumber{"3.402823e38"}, append([]byte{'[', '$', 'H', '#', 'U', 0x01, 0x55, 0x0B}, "3.402823e38"...),
+		"[[][$][H][#][U][1]\n\t[U][11][3.402823e38]"},
 }
 
 type complexType struct {

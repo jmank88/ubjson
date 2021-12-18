@@ -2,6 +2,7 @@ package ubjson
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"unicode/utf8"
 )
@@ -154,5 +155,30 @@ func firstStringDiff(s1, s2 string) stringDiff {
 		}
 		diff.index += l
 		diff.rune++
+	}
+}
+
+func Test_elementMarkerFor(t *testing.T) {
+	for _, tt := range []struct {
+		v interface{}
+		m Marker
+	}{
+		{uint8(1), UInt8Marker},
+		{int8(2), Int8Marker},
+		{int16(3), Int16Marker},
+		{int32(4), Int32Marker},
+		{int64(5), Int64Marker},
+		{float32(1.1), Float32Marker},
+		{float64(2.2), Float64Marker},
+		{HighPrecNumber(""), HighPrecNumMarker},
+		{Char('a'), CharMarker},
+		{"", StringMarker},
+	} {
+		tt := tt
+		t.Run(tt.m.String(), func(t *testing.T) {
+			if got := elementMarkerFor(reflect.TypeOf(tt.v)); got != tt.m {
+				t.Errorf("expected %s for %v but got %s", tt.m, tt.v, got)
+			}
+		})
 	}
 }

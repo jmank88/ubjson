@@ -18,7 +18,7 @@ func (tc *testCase) unmarshal(t *testing.T) {
 	actual := reflect.New(reflect.ValueOf(tc.value).Type())
 
 	if err := Unmarshal(tc.binary, actual.Interface()); err != nil {
-		t.Fatal("failed to unmarshal:", err.Error())
+		t.Fatalf("failed to unmarshal: %+v\n", err)
 	}
 	if !reflect.DeepEqual(actual.Elem().Interface(), expected) {
 		t.Errorf("\nexpected: %T %v \nbut got:  %T %v",

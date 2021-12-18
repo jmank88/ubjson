@@ -1,7 +1,6 @@
 package ubjson
 
 import (
-	"fmt"
 	"io"
 	"reflect"
 
@@ -171,6 +170,12 @@ func elementMarkerFor(t reflect.Type) Marker {
 	if t == nil {
 		return 0
 	}
+	switch t {
+	case reflect.TypeOf(Char(0)):
+		return CharMarker
+	case reflect.TypeOf(HighPrecNumber("")):
+		return HighPrecNumMarker
+	}
 	k := t.Kind()
 	if v, ok := reflect.New(t).Interface().(Value); ok {
 		m := v.UBJSONType()
@@ -197,9 +202,9 @@ func elementMarkerFor(t reflect.Type) Marker {
 	case reflect.Int64:
 		return Int64Marker
 	case reflect.Float32:
-		return Int64Marker
+		return Float32Marker
 	case reflect.Float64:
-		return Int64Marker
+		return Float64Marker
 	case reflect.Array, reflect.Slice:
 		return ArrayStartMarker
 	case reflect.Map, reflect.Struct:
@@ -256,7 +261,7 @@ func (a *ArrayEncoder) End() error {
 			return err
 		}
 	} else if a.len != a.count {
-		return fmt.Errorf("unable to end array of length %d after %d elements", a.len, a.count)
+		return errors.Errorf("unable to end array of length %d after %d elements", a.len, a.count)
 	}
 
 	return a.Flush()
@@ -334,7 +339,7 @@ func (o *ObjectEncoder) End() error {
 			return err
 		}
 	} else if 2*o.len != o.count {
-		return fmt.Errorf("unable to end map of %d entries after %d", o.len, o.count/2)
+		return errors.Errorf("unable to end map of %d entries after %d", o.len, o.count/2)
 	}
 
 	return o.Flush()
@@ -459,7 +464,7 @@ func (e *Encoder) Encode(v interface{}) error {
 
 	case reflect.Map:
 		if k := value.Type().Key().Kind(); k != reflect.String {
-			return fmt.Errorf("unable to encode map of type %s: key reflect.Kind must be reflect.String but is %s", value.Type(), k)
+			return errors.Errorf("unable to encode map of type %s: key reflect.Kind must be reflect.String but is %s", value.Type(), k)
 		}
 		return e.encode(ObjectStartMarker, encodeMap(value))
 
@@ -473,7 +478,7 @@ func (e *Encoder) Encode(v interface{}) error {
 		return e.Encode(value.Elem().Interface())
 	}
 
-	return fmt.Errorf("unable to encode value: %v", v)
+	return errors.Errorf("unable to encode value: %v", v)
 }
 
 func encodeArray(arrayValue reflect.Value) func(*Encoder) error {
