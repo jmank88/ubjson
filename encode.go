@@ -1,10 +1,10 @@
 package ubjson
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"reflect"
-
-	"github.com/pkg/errors"
 )
 
 // Encoder provides methods for encoding UBJSON data types.
@@ -115,7 +115,7 @@ func (e *Encoder) EncodeInt(v int) error {
 	case Int64Marker:
 		return e.EncodeInt64(int64(v))
 	default:
-		return errors.Errorf("unsupported marker: %s", string(m))
+		return fmt.Errorf("unsupported marker: %s", string(m))
 	}
 }
 
@@ -261,7 +261,7 @@ func (a *ArrayEncoder) End() error {
 			return err
 		}
 	} else if a.len != a.count {
-		return errors.Errorf("unable to end array of length %d after %d elements", a.len, a.count)
+		return fmt.Errorf("unable to end array of length %d after %d elements", a.len, a.count)
 	}
 
 	return a.Flush()
@@ -339,7 +339,7 @@ func (o *ObjectEncoder) End() error {
 			return err
 		}
 	} else if 2*o.len != o.count {
-		return errors.Errorf("unable to end map of %d entries after %d", o.len, o.count/2)
+		return fmt.Errorf("unable to end map of %d entries after %d", o.len, o.count/2)
 	}
 
 	return o.Flush()
@@ -464,7 +464,7 @@ func (e *Encoder) Encode(v interface{}) error {
 
 	case reflect.Map:
 		if k := value.Type().Key().Kind(); k != reflect.String {
-			return errors.Errorf("unable to encode map of type %s: key reflect.Kind must be reflect.String but is %s", value.Type(), k)
+			return fmt.Errorf("unable to encode map of type %s: key reflect.Kind must be reflect.String but is %s", value.Type(), k)
 		}
 		return e.encode(ObjectStartMarker, encodeMap(value))
 
@@ -478,7 +478,7 @@ func (e *Encoder) Encode(v interface{}) error {
 		return e.Encode(value.Elem().Interface())
 	}
 
-	return errors.Errorf("unable to encode value: %v", v)
+	return fmt.Errorf("unable to encode value: %v", v)
 }
 
 func encodeArray(arrayValue reflect.Value) func(*Encoder) error {
@@ -501,7 +501,7 @@ func encodeArray(arrayValue reflect.Value) func(*Encoder) error {
 
 		for i := 0; i < arrayValue.Len(); i++ {
 			if err := ae.Encode(arrayValue.Index(i).Interface()); err != nil {
-				return errors.Wrapf(err, "failed to encode array element %d", i)
+				return fmt.Errorf("failed to encode array element %d: %w", i, err)
 			}
 		}
 
@@ -533,10 +533,10 @@ func encodeMap(mapValue reflect.Value) func(*Encoder) error {
 
 		for _, key := range keys {
 			if err := o.EncodeKey(key.String()); err != nil {
-				return errors.Wrapf(err, "failed to encode key %q", key.String())
+				return fmt.Errorf("failed to encode key %q: %w", key.String(), err)
 			}
 			if err := o.Encode(mapValue.MapIndex(key).Interface()); err != nil {
-				return errors.Wrapf(err, "failed to encode value for key %q", key.String())
+				return fmt.Errorf("failed to encode value for key %q: %w", key.String(), err)
 			}
 		}
 
@@ -562,11 +562,11 @@ func encodeStruct(structValue reflect.Value) func(*Encoder) error {
 				panic("invalid cached type info: no index for field " + name)
 			}
 			if err := o.EncodeKey(name); err != nil {
-				return errors.Wrapf(err, "failed to encode key %q", name)
+				return fmt.Errorf("failed to encode key %q: %w", name, err)
 			}
 			val := structValue.Field(i).Interface()
 			if err := o.Encode(val); err != nil {
-				return errors.Wrapf(err, "failed to encode value for key %q", name)
+				return fmt.Errorf("failed to encode value for key %q: %w", name, err)
 			}
 		}
 

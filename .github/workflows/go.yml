@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go: [1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18]
+        go: [1.15, 1.16, 1.17, 1.18, 1.19, "1.20", 1.21]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
@@ -29,4 +29,4 @@ jobs:
       run: go test ./...
 
     - name: Race
-      run: go test -race ./...
+      run: go test -race -count 10 ./...
