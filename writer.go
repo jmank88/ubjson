@@ -3,12 +3,11 @@ package ubjson
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
 type writer interface {
@@ -120,7 +119,7 @@ func (w *blockWriter) writeChar(v byte) error {
 // The writeString method writes a length-prefixed UBJSON string.
 func (w *blockWriter) writeString(s string) error {
 	if err := writeInt(w, len(s)); err != nil {
-		return errors.Wrap(err, "failed writing string lenth prefix")
+		return fmt.Errorf("failed writing string lenth prefix: %w", err)
 	}
 
 	if len(s) > 0 {
@@ -204,7 +203,7 @@ func (w *binaryWriter) writeChar(v byte) error {
 
 func (w *binaryWriter) writeString(s string) error {
 	if err := writeInt(w, len(s)); err != nil {
-		return errors.Wrap(err, "failed writing string lenth prefix")
+		return fmt.Errorf("failed writing string lenth prefix: %w", err)
 	}
 
 	if len(s) > 0 {

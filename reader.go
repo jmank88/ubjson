@@ -3,12 +3,11 @@ package ubjson
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
 // A reader reads UBJSON types.
@@ -85,7 +84,7 @@ func readContainer(r reader) (Marker, int, error) {
 			return 0, 0, err
 		}
 		if l < 0 {
-			return 0, 0, errors.Errorf("illegal negative container length: %d", l)
+			return 0, 0, fmt.Errorf("illegal negative container length: %d", l)
 		}
 		return m, l, nil
 
@@ -98,7 +97,7 @@ func readContainer(r reader) (Marker, int, error) {
 			return 0, 0, err
 		}
 		if l < 0 {
-			return 0, 0, errors.Errorf("illegal negative container length: %d", l)
+			return 0, 0, fmt.Errorf("illegal negative container length: %d", l)
 		}
 		return 0, l, nil
 
@@ -209,20 +208,20 @@ func (r *binaryReader) readFloat64() (float64, error) {
 func (r *binaryReader) readString(max int) (string, error) {
 	l, err := readInt(r)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read string length prefix")
+		return "", fmt.Errorf("failed to read string length prefix: %w", err)
 	}
 	switch {
 	case l == 0:
 		return "", nil
 	case l < 0:
-		return "", errors.Errorf("illegal string length prefix: %d", l)
+		return "", fmt.Errorf("illegal string length prefix: %d", l)
 	case l > max:
-		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
+		return "", fmt.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	b := make([]byte, l)
 	n, err := r.Read(b)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read string bytes")
+		return "", fmt.Errorf("failed to read string bytes: %w", err)
 	}
 	if n != l {
 		return "", fmt.Errorf("failed to read full string length (%d), instead got: %s", l, string(b[:n]))
@@ -265,7 +264,7 @@ func (r *blockReader) nextBlock() (string, error) {
 // The readBlock method reads the next block.
 func (r *blockReader) readBlock() (string, error) {
 	if _, err := r.ReadBytes('['); err != nil {
-		return "", errors.Wrap(err, "failed to read block start")
+		return "", fmt.Errorf("failed to read block start: %w", err)
 	}
 	s, err := r.ReadString(']')
 	if err != nil {
@@ -318,7 +317,7 @@ func (r *blockReader) readUInt8() (uint8, error) {
 	}
 	i, err := strconv.ParseUint(s, 10, 8)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to parse uint8")
+		return 0, fmt.Errorf("failed to parse uint8: %w", err)
 	}
 	return uint8(i), nil
 }
@@ -340,7 +339,7 @@ func (r *blockReader) readBlockedInt(bitSize int) (int64, error) {
 	}
 	i, err := strconv.ParseInt(s, 10, bitSize)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to parse int%d", bitSize)
+		return 0, fmt.Errorf("failed to parse int%d: %w", bitSize, err)
 	}
 	return i, nil
 }
@@ -376,19 +375,19 @@ func (r *blockReader) readFloat64() (float64, error) {
 func (r *blockReader) readString(max int) (string, error) {
 	l, err := readInt(r)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read string length prefix")
+		return "", fmt.Errorf("failed to read string length prefix: %w", err)
 	}
 	switch {
 	case l == 0:
 		return "", nil
 	case l < 0:
-		return "", errors.Errorf("illegal string length prefix: %d", l)
+		return "", fmt.Errorf("illegal string length prefix: %d", l)
 	case l > max:
-		return "", errors.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
+		return "", fmt.Errorf("string length prefix exceeds max allocation limit of %d: %d", max, l)
 	}
 	s, err := r.nextBlock()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read string block")
+		return "", fmt.Errorf("failed to read string block: %w", err)
 	}
 	if len(s) != l {
 		return "", fmt.Errorf("string length %d but prefix %d", len(s), l)

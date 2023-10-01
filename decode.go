@@ -1,11 +1,10 @@
 package ubjson
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
-
-	"github.com/pkg/errors"
 )
 
 // MaxCollectionAlloc is the default maximum collection capacity allocation.
@@ -48,7 +47,7 @@ func (d *Decoder) DecodeValue(v Value) error {
 // decodeValue asserts a value's type marker, then decodes the data.
 func (d *Decoder) decodeValue(m Marker, decodeData func(*Decoder) error) error {
 	if r, err := d.readValType(); err != nil {
-		return errors.Wrapf(err, "failed trying to read type '%s'", m)
+		return fmt.Errorf("failed trying to read type '%s': %w", m, err)
 	} else if r != m {
 		return errWrongTypeRead(m, r)
 	}
@@ -59,7 +58,7 @@ func (d *Decoder) decodeValue(m Marker, decodeData func(*Decoder) error) error {
 func (d *Decoder) assertType(m Marker) error {
 	r, err := d.readMarker()
 	if err != nil {
-		return errors.Wrapf(err, "failed trying to read type '%s'", m)
+		return fmt.Errorf("failed trying to read type '%s': %w", m, err)
 	}
 	if r != m {
 		return errWrongTypeRead(m, r)
@@ -587,7 +586,7 @@ func (d *Decoder) Decode(v interface{}) error {
 
 	value := reflect.ValueOf(v)
 	if value.Kind() != reflect.Ptr {
-		return errors.Errorf("can only decode into pointers, not: %s", value.Type())
+		return fmt.Errorf("can only decode into pointers, not: %s", value.Type())
 	}
 	// Containers
 	switch value.Elem().Kind() {
@@ -618,7 +617,7 @@ func arrayToArray(arrayPtr reflect.Value) func(*ArrayDecoder) error {
 		elemType := arrayValue.Type().Elem()
 		if ad.Len > 0 {
 			if ad.Len >= 0 && ad.Len != arrayValue.Len() {
-				return errors.Errorf("unable to decode data length %d into array of length %d", ad.Len, arrayValue.Len())
+				return fmt.Errorf("unable to decode data length %d into array of length %d", ad.Len, arrayValue.Len())
 			}
 		}
 
@@ -649,7 +648,7 @@ func arrayToSlice(slicePtr reflect.Value) func(*ArrayDecoder) error {
 				sliceValue = reflect.Append(sliceValue, elemPtr.Elem())
 			}
 		} else if ad.Len > ad.MaxCollectionAlloc {
-			return errors.Errorf("collection exceeds max allocation limit of %d: %d", ad.MaxCollectionAlloc, ad.Len)
+			return fmt.Errorf("collection exceeds max allocation limit of %d: %d", ad.MaxCollectionAlloc, ad.Len)
 		} else {
 			sliceValue.Set(reflect.MakeSlice(sliceValue.Type(), ad.Len, ad.Len))
 
@@ -672,7 +671,7 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 		for o.NextEntry() {
 			k, err := o.DecodeKey()
 			if err != nil {
-				return errors.Wrapf(err, "failed to decode key with call #%d", o.count)
+				return fmt.Errorf("failed to decode key with call #%d: %w", o.count, err)
 			}
 			structValue := structPtr.Elem()
 			f := fieldByName(structValue, k)
@@ -680,10 +679,10 @@ func objectIntoStruct(structPtr reflect.Value) func(*ObjectDecoder) error {
 				// Discard value with no matching field.
 				// TODO could be more efficient with custom discardValue() method
 				if _, err := o.decodeInterface(); err != nil {
-					return errors.Wrapf(err, "failed to discard value for %q with call #%d", k, o.count)
+					return fmt.Errorf("failed to discard value for %q with call #%d: %w", k, o.count, err)
 				}
 			} else if err := o.Decode(f.Addr().Interface()); err != nil {
-				return errors.Wrapf(err, "failed to decode value for %q with call #%d", k, o.count)
+				return fmt.Errorf("failed to decode value for %q with call #%d: %w", k, o.count, err)
 			}
 		}
 		return o.End()
@@ -703,7 +702,7 @@ func fieldByName(structValue reflect.Value, k string) reflect.Value {
 func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 	return func(o *ObjectDecoder) error {
 		if o.Len > o.MaxCollectionAlloc {
-			return errors.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
+			return fmt.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
 		}
 		mapValue := mapPtr.Elem()
 		mapValue.Set(makeMap(mapValue.Type(), o.Len))
@@ -712,13 +711,13 @@ func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 		for o.NextEntry() {
 			k, err := o.DecodeKey()
 			if err != nil {
-				return errors.Wrapf(err, "failed to decode key #%d", o.count)
+				return fmt.Errorf("failed to decode key #%d: %w", o.count, err)
 			}
 
 			valPtr := reflect.New(elemType)
 
 			if err := o.Decode(valPtr.Interface()); err != nil {
-				return errors.Wrapf(err, "failed to decode value #%d", o.count)
+				return fmt.Errorf("failed to decode value #%d: %w", o.count, err)
 			}
 
 			mapValue.SetMapIndex(reflect.ValueOf(k), valPtr.Elem())
@@ -731,7 +730,7 @@ func objectIntoMap(mapPtr reflect.Value) func(*ObjectDecoder) error {
 // either interface{} or a stricter type if the object is strongly typed.
 func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	if o.Len > o.MaxCollectionAlloc {
-		return nil, errors.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
+		return nil, fmt.Errorf("collection exceeds max allocation limit of %d: %d", o.MaxCollectionAlloc, o.Len)
 	}
 	if o.ValType == NoOpMarker {
 		return nil, errors.New("No-Op (N) is not a legal strong type")
@@ -742,11 +741,11 @@ func objectAsInterface(o *ObjectDecoder) (interface{}, error) {
 	for o.NextEntry() {
 		k, err := o.DecodeKey()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to decode key #%d", o.count)
+			return nil, fmt.Errorf("failed to decode key #%d: %w", o.count, err)
 		}
 		valPtr := reflect.New(mapType.Elem())
 		if err := o.Decode(valPtr.Interface()); err != nil {
-			return nil, errors.Wrapf(err, "failed to decode value #%d", o.count)
+			return nil, fmt.Errorf("failed to decode value #%d: %w", o.count, err)
 		}
 
 		mapValue.SetMapIndex(reflect.ValueOf(k), valPtr.Elem())
@@ -774,7 +773,7 @@ func arrayAsInterface(a *ArrayDecoder) (interface{}, error) {
 			sliceValue = reflect.Append(sliceValue, elemPtr.Elem())
 		}
 	} else if a.Len > a.MaxCollectionAlloc {
-		return "", errors.Errorf("collection exceeds max allocation limit of %d: %d", a.MaxCollectionAlloc, a.Len)
+		return "", fmt.Errorf("collection exceeds max allocation limit of %d: %d", a.MaxCollectionAlloc, a.Len)
 	} else {
 		sliceValue = reflect.MakeSlice(sliceType, a.Len, a.Len)
 
