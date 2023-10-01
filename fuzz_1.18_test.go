@@ -16,6 +16,8 @@ func FuzzBinary(f *testing.F) {
 	for _, c := range cases {
 		f.Add(c.binary)
 	}
+	f.Add([]byte("[$C#U\x010"))
+	f.Add([]byte("[$d#U\x190000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
 	const corpus = "testdata/bin/corpus"
 	if dir, err := testdata.ReadDir(corpus); err != nil {
 		f.Fatal("failed to read corpus dir:", err)
@@ -54,6 +56,7 @@ func FuzzBlock(f *testing.F) {
 	for _, c := range cases {
 		f.Add(c.block)
 	}
+	f.Add("[[][$][C][#][U][1][0]")
 	const corpus = "testdata/block/corpus"
 	if dir, err := testdata.ReadDir(corpus); err != nil {
 		f.Fatal("failed to read corpus dir:", err)
